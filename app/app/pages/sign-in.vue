@@ -8,53 +8,90 @@
       </header>
 
       <div class="buttons">
-        <button class="btn btn-kakao" :disabled="loading" @click="signIn('kakao')">
+        <button class="btn btn-kakao" :disabled="loading || !isConfigured" @click="signIn('kakao')">
           카카오로 로그인
         </button>
-        <button class="btn btn-google" :disabled="loading" @click="signIn('google')">
+        <button
+          class="btn btn-google"
+          :disabled="loading || !isConfigured"
+          @click="signIn('google')"
+        >
           구글로 로그인
         </button>
       </div>
 
       <p v-if="loading" class="status">로그인 중...</p>
       <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-      <p v-if="session" class="status">이미 로그인되어 있어요. 이동 중...</p>
+      <p v-if="session && !loading" class="status">이미 로그인되어 있어요. 이동 중...</p>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import type { Provider, SupabaseClient } from '@supabase/supabase-js'
+import type { Provider } from '@supabase/supabase-js'
 
-const supabase = useNuxtApp().$supabase as SupabaseClient
+const supabase = useNuxtApp().$supabase
+const { session, isReady } = useAuth()
+const isConfigured = computed(() => Boolean(supabase))
 const router = useRouter()
+const route = useRoute()
 
 const loading = ref(false)
 const errorMessage = ref('')
-const session = ref<null | object>(null)
 
 const signIn = async (provider: Provider) => {
   errorMessage.value = ''
   loading.value = true
 
+  if (!supabase) {
+    errorMessage.value = 'Supabase 환경변수가 설정되지 않았어요.'
+    loading.value = false
+    return
+  }
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: window.location.origin + '/sign-in'
-    }
+      redirectTo: window.location.origin + '/sign-in',
+    },
   })
 
   if (error) {
-    errorMessage.value = '로그인에 실패했어요. 잠시 후 다시 시도해주세요.'
+    errorMessage.value = error.message || '로그인에 실패했어요. 잠시 후 다시 시도해주세요.'
     loading.value = false
   }
 }
 
+// OAuth 콜백: URL에 code가 있으면 세션으로 교환 후 홈으로
 onMounted(async () => {
-  const { data } = await supabase.auth.getSession()
-  if (data.session) {
-    session.value = data.session
-    await router.replace('/')
+  if (!supabase) {
+    errorMessage.value = 'Supabase 환경변수가 설정되지 않았어요.'
+    return
+  }
+
+  const code = route.query.code as string | undefined
+
+  if (code) {
+    loading.value = true
+    const { data: exchangeData, error: exchangeError } =
+      await supabase.auth.exchangeCodeForSession(code)
+    loading.value = false
+    if (exchangeError) {
+      errorMessage.value =
+        exchangeError.message || '로그인 처리에 실패했어요. 잠시 후 다시 시도해주세요.'
+      await router.replace({ path: '/sign-in', query: {} })
+      return
+    }
+    if (exchangeData.session) {
+      await router.replace('/')
+    }
+    return
+  }
+})
+
+watch([isReady, session], ([ready, sess]) => {
+  if (ready && sess && !route.query.code) {
+    router.replace('/')
   }
 })
 </script>
@@ -62,7 +99,12 @@ onMounted(async () => {
 <style scoped>
 :global(body) {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   background: #f7f7f9;
   color: #111;
 }
@@ -123,7 +165,9 @@ onMounted(async () => {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.06s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.2s ease;
 }
 
 .btn:disabled {
