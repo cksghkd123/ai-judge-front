@@ -1,0 +1,44 @@
+# Design System & UI/UX Guidelines for "Playful AI Judge"
+
+## 1. Design Philosophy
+- **Vibe:** Playful, Mischievous(장난스러운), Hand-drawn(낙서 같은), Satirical(풍자적인).
+- **Core Concept:** "낙서장에 대충 휘갈겨 쓴 판결문". 엄근진(엄격/근엄/진지)한 법정이 아니라, 유쾌한 동네 재판소 느낌.
+- **Visual Style:** - **Neo-Brutalism meets Doodle:** 굵은 검은색 테두리(Thick black borders), 거친 그림자(Hard shadows), 비비드한 색감.
+    - **Imperfection:** 완벽한 직선보다는 약간 삐뚤빼뚤한 느낌 지향.
+
+## 2. Tech Stack & Styling
+- **Framework:** Nuxt.js (Vue 3)
+- **Styling Engine:** Tailwind CSS
+- **Font Integration:** @nuxtjs/google-fonts
+- **Key Libraries:** `rough-notation` (for highlighting), `phosphor-icons` (Bold/Fill style)
+
+## 3. Color Palette (Doodle Theme)
+*AI에게 색상 코드를 잊지 않도록 강제하는 설정입니다.*
+
+- **Background (Sketchbook):** `#FFFDF5` (따뜻한 미색, 종이 느낌) -> Tailwind: `bg-paper`
+- **Text/Borders (Ink):** `#18181B` (완전한 검정보다는 진한 먹색) -> Tailwind: `text-ink`, `border-ink`
+- **Primary (Stamp/Point):** `#FF4757` (채점용 빨간펜 색) -> Tailwind: `bg-primary`
+- **Secondary (Highlighter):** `#FFD32A` (형광펜 노랑) -> Tailwind: `bg-accent`
+- **Tertiary (Cool Doodle):** `#3742FA` (파란 볼펜 색) -> Tailwind: `bg-blue-pen`
+
+## 4. Typography (Korean & English)
+- **Headings (낙서 느낌):** 'Gamja Flower' (감자꽃) or 'Jua' (주아)
+    - *Use specifically for titles, buttons, and "Judge's Ruling".*
+- **Body (가독성+부드러움):** 'Gowun Dodum' (고운돋움) or 'Poor Story'
+    - *Must be readable but still feel handwritten.*
+
+## 5. UI Component Rules (The "Doodle" Look)
+- **Borders:** 모든 컨테이너와 버튼은 `border-2` 또는 `border-4`의 `border-ink`를 가짐.
+- **Shadows:** 부드러운 그림자 금지. `shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]` 형태의 딱딱한 하드 쉐도우 사용.
+- **Buttons:** - 기본: 굵은 테두리 + 하드 쉐도우.
+    - Hover 시: 쉐도우 위치가 이동하거나(translate) 배경색이 반전됨.
+    - 모양: 완벽한 둥근 모양(`rounded-full`)보다는 약간 둥근(`rounded-lg`) 형태.
+- **Inputs:** 포커스 되면 형광펜 색(`bg-accent`)으로 배경이 바뀌거나 테두리가 두꺼워짐.
+
+## 6. Interaction & Animation
+- **Hover Effects:** `hover:-translate-y-1` 처럼 통통 튀는 느낌.
+- **Transitions:** 부드러운 fade 보다는 빠르고 즉각적인 변화 (duration-150 ease-out).
+
+## 7. Git Workflow & Commit Convention
+- **Rule:** 작업을 완료하면 항상 `git add .` 후 커밋 메시지를 제안하고, 승인 시 커밋을 수행(또는 명령어 생성)한다.
+- **Commit Style:** 한글로 작성
