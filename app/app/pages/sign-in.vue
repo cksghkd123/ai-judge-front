@@ -83,7 +83,7 @@ onMounted(async () => {
       return
     }
     if (exchangeData.session) {
-      await router.replace('/')
+      await router.replace('/dashboard')
     }
     return
   }
@@ -91,7 +91,7 @@ onMounted(async () => {
 
 watch([isReady, session], ([ready, sess]) => {
   if (ready && sess && !route.query.code) {
-    router.replace('/')
+    router.replace('/dashboard')
   }
 })
 </script>

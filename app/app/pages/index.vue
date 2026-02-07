@@ -1,32 +1,26 @@
 <template>
   <main class="page">
     <section class="card">
-      <h1 class="title">AI 판사</h1>
-      <p class="subtitle">환영해요, {{ user?.user_metadata?.full_name ?? user?.email ?? '판사님' }}!</p>
-      <p class="desc">로그인에 성공했어요. 이제 재판을 시작할 수 있어요.</p>
-      <button type="button" class="btn" :disabled="loggingOut" @click="handleSignOut">
-        {{ loggingOut ? '로그아웃 중...' : '로그아웃' }}
-      </button>
+      <h1 class="title">땅땅땅</h1>
+      <h3 class="subtitle">AI 판사</h3>
+      <p class="tagline">낙서장에 대충 휘갈겨 쓴 판결문</p>
+      <NuxtLink class="btn" to="/sign-in">시작하기</NuxtLink>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
-
-const { user, signOut } = useAuth()
+const { isLoggedIn } = useAuth()
 const router = useRouter()
-const loggingOut = ref(false)
 
-const handleSignOut = async () => {
-  loggingOut.value = true
-  try {
-    await signOut()
-    await router.replace('/sign-in')
-  } finally {
-    loggingOut.value = false
-  }
-}
+// 로그인된 상태로 / 접속 시 대시보드로
+watch(
+  isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) router.replace('/dashboard')
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -42,53 +36,40 @@ const handleSignOut = async () => {
 
 .card {
   width: 100%;
-  max-width: 420px;
-  background: #fff;
-  border-radius: 20px;
-  padding: 28px 24px;
-  box-shadow: 0 10px 30px rgba(17, 17, 17, 0.08);
+  max-width: 400px;
   text-align: center;
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .title {
   margin: 0;
-  font-size: 22px;
+  font-size: 28px;
+  font-weight: 700;
 }
 
-.subtitle {
-  margin: 0;
-  color: #111;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.desc {
+.tagline {
   margin: 0;
   color: #6b7280;
   font-size: 14px;
 }
 
 .btn {
+  display: inline-block;
   margin-top: 8px;
-  padding: 12px 20px;
+  padding: 12px 24px;
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background: #374151;
+  background: #18181b;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
+  text-decoration: none;
   transition: opacity 0.15s ease;
 }
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn:not(:disabled):hover {
+.btn:hover {
   opacity: 0.9;
 }
 </style>
