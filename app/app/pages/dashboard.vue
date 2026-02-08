@@ -1,11 +1,26 @@
 <template>
-  <main class="page">
-    <section class="card">
-      <h1 class="title">대시보드</h1>
-      <p class="welcome">환영해요, {{ user?.user_metadata?.full_name ?? user?.email ?? '판사님' }}!</p>
-      <button type="button" class="btn" :disabled="loggingOut" @click="handleSignOut">
-        {{ loggingOut ? '로그아웃 중...' : '로그아웃' }}
-      </button>
+  <main class="min-h-screen flex flex-col items-center justify-center p-6 bg-paper text-ink font-body">
+    <section class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
+      <h1 class="font-heading text-2xl m-0">대시보드</h1>
+      <p class="m-0 text-ink/80">
+        환영해요, {{ user?.user_metadata?.full_name ?? user?.email ?? '판사님' }}!
+      </p>
+      <div class="flex flex-col gap-2">
+        <NuxtLink
+          to="/profile"
+          class="border-2 border-ink rounded-lg px-4 py-2 font-heading font-semibold bg-blue-pen text-paper shadow-hard text-center no-underline transition duration-150 ease-out hover:-translate-y-1"
+        >
+          내 정보
+        </NuxtLink>
+        <button
+          type="button"
+          class="border-2 border-ink rounded-lg px-4 py-2 font-heading font-semibold bg-ink text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+          :disabled="loggingOut"
+          @click="handleSignOut"
+        >
+          {{ loggingOut ? '로그아웃 중...' : '로그아웃' }}
+        </button>
+      </div>
     </section>
   </main>
 </template>
@@ -28,56 +43,3 @@ const handleSignOut = async () => {
 }
 </script>
 
-<style scoped>
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: #f7f7f9;
-  color: #111;
-}
-
-.card {
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  display: grid;
-  gap: 16px;
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.welcome {
-  margin: 0;
-  font-size: 15px;
-  color: #374151;
-}
-
-.btn {
-  margin-top: 8px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #18181b;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn:not(:disabled):hover {
-  opacity: 0.9;
-}
-</style>
