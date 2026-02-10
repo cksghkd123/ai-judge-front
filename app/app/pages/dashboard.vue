@@ -7,6 +7,12 @@
       </p>
       <div class="flex flex-col gap-2">
         <NuxtLink
+          to="/complaint/new"
+          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard text-center no-underline transition duration-150 ease-out hover:-translate-y-1"
+        >
+          고소하기
+        </NuxtLink>
+        <NuxtLink
           to="/profile"
           class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-blue-pen text-paper shadow-hard text-center no-underline transition duration-150 ease-out hover:-translate-y-1"
         >
