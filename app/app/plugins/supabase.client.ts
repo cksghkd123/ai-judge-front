@@ -4,9 +4,9 @@ import { defineNuxtPlugin, useRuntimeConfig } from 'nuxt/app'
 export default defineNuxtPlugin<{ supabase: SupabaseClient | null }>(() => {
   const config = useRuntimeConfig()
   const supabaseUrl = config.public.supabaseUrl as string | undefined
-  const supabaseAnonKey = config.public.supabaseAnonKey as string | undefined
+  const supabasePublishableKey = config.public.supabasePublishableKey as string | undefined
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabasePublishableKey) {
     console.error('Supabase env vars are missing')
     return {
       provide: {
@@ -15,7 +15,7 @@ export default defineNuxtPlugin<{ supabase: SupabaseClient | null }>(() => {
     }
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createClient(supabaseUrl, supabasePublishableKey, {
     auth: {
       flowType: 'pkce',
       detectSessionInUrl: true

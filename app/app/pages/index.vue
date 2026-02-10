@@ -3,7 +3,7 @@
     <section class="card">
       <h1 class="title">땅땅땅</h1>
       <h3 class="subtitle">AI 판사</h3>
-      <p class="tagline">낙서장에 대충 휘갈겨 쓴 판결문</p>
+      <p class="tagline">딱. 정해드립니다.</p>
       <NuxtLink class="btn" to="/sign-in">시작하기</NuxtLink>
     </section>
   </main>
