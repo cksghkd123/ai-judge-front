@@ -5,13 +5,13 @@
     <div class="w-full max-w-md flex flex-col gap-6">
       <NuxtLink
         to="/dashboard"
-        class="self-start text-blue-pen hover:underline font-heading text-lg transition duration-150 ease-out"
+        class="self-start text-blue-pen hover:underline font-ui text-lg transition duration-150 ease-out"
       >
         ← 대시보드로 돌아가기
       </NuxtLink>
 
       <section class="border-4 border-ink bg-paper p-6 rounded-lg shadow-hard flex flex-col gap-4">
-        <h1 class="font-heading text-2xl m-0 text-center">고소인 인적사항</h1>
+        <h1 class="font-heading font-extrabold tracking-tight text-2xl m-0 text-center">고소인 인적사항</h1>
 
         <div class="flex flex-col gap-3 p-4">
           <!-- 고소인 -->
@@ -27,7 +27,7 @@
               />
               <button
                 type="button"
-                class="btn-primary text-sm py-1.5 shrink-0"
+                class="btn-primary font-ui text-sm py-1.5 shrink-0"
                 @click="confirmEditName"
               >
                 완료
@@ -94,12 +94,12 @@
                 <button
                   v-if="editJobs.length < 5"
                   type="button"
-                  class="btn-secondary text-sm py-1.5 self-start"
+                  class="btn-secondary font-ui text-sm py-1.5 self-start"
                   @click="addJob"
                 >
                   + 직업 추가
                 </button>
-                <button type="button" class="btn-primary text-sm py-1.5 self-start" @click="confirmEditJob">
+                <button type="button" class="btn-primary font-ui text-sm py-1.5 self-start" @click="confirmEditJob">
                   완료
                 </button>
               </div>
@@ -141,7 +141,7 @@
               />
               <button
                 type="button"
-                class="btn-primary text-sm py-1.5 shrink-0"
+                class="btn-primary font-ui text-sm py-1.5 shrink-0"
                 @click="confirmEditAddress"
               >
                 완료
@@ -174,7 +174,7 @@
 
         <NuxtLink
           to="/complaints"
-          class="btn-secondary w-full text-center"
+          class="btn-secondary font-ui w-full text-center"
         >
           고소내역
         </NuxtLink>
@@ -188,10 +188,10 @@
         </p>
 
         <div class="flex flex-row gap-2 pt-2">
-          <button type="button" :disabled="loggingOut" class="btn-secondary flex-1" @click="handleSignOut">
+          <button type="button" :disabled="loggingOut" class="btn-secondary font-ui flex-1" @click="handleSignOut">
             {{ loggingOut ? '로그아웃 중...' : '로그아웃' }}
           </button>
-          <button type="button" class="btn-danger flex-1" @click="showWithdrawModal = true">
+          <button type="button" class="btn-danger font-ui flex-1" @click="showWithdrawModal = true">
             회원탈퇴
           </button>
         </div>
@@ -210,15 +210,15 @@
         aria-labelledby="edit-name-title"
         aria-modal="true"
       >
-        <h2 id="edit-name-title" class="font-heading text-xl m-0">수정하시겠어요?</h2>
+        <h2 id="edit-name-title" class="font-heading tracking-tight text-xl m-0">수정하시겠어요?</h2>
         <p class="text-sm m-0 text-ink/80">
           이제 "{{ editFullName || '이름 없음' }}" 으로 사람들에게 보일 거예요.
         </p>
         <div class="flex gap-2 justify-end">
-          <button type="button" class="btn-secondary" @click="showEditNameCompleteModal = false">
+          <button type="button" class="btn-secondary font-ui" @click="showEditNameCompleteModal = false">
             취소
           </button>
-          <button type="button" :disabled="saving" class="btn-primary" @click="confirmSaveName">
+          <button type="button" :disabled="saving" class="btn-primary font-ui" @click="confirmSaveName">
             {{ saving ? '저장 중...' : '확인' }}
           </button>
         </div>
@@ -237,12 +237,12 @@
           aria-labelledby="withdraw-title"
           aria-modal="true"
         >
-          <h2 id="withdraw-title" class="font-heading text-xl m-0">정말 탈퇴하시겠어요?</h2>
+          <h2 id="withdraw-title" class="font-heading tracking-tight text-xl m-0">정말 탈퇴하시겠어요?</h2>
           <p class="text-sm m-0 text-ink/80">
             탈퇴 시 계정이 삭제됩니다. 이 작업은 되돌릴 수 없어요.
           </p>
           <div class="flex gap-2 justify-end">
-            <button type="button" class="btn-secondary" @click="showWithdrawModal = false">
+            <button type="button" class="btn-secondary font-ui" @click="showWithdrawModal = false">
               취소
             </button>
             <button
@@ -424,20 +424,3 @@ function confirmWithdraw() {
   }, 500)
 }
 </script>
-
-<style scoped>
-.btn-primary {
-  @apply border-2 border-ink rounded-lg px-4 py-2 font-heading font-semibold bg-primary text-paper shadow-hard transition duration-150 ease-out;
-  @apply hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none;
-}
-
-.btn-secondary {
-  @apply border-2 border-ink rounded-lg px-4 py-2 font-heading font-semibold bg-paper text-ink shadow-hard transition duration-150 ease-out;
-  @apply hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none;
-}
-
-.btn-danger {
-  @apply border-2 border-ink rounded-lg px-4 py-2 font-heading font-semibold bg-paper text-primary border-primary shadow-hard transition duration-150 ease-out;
-  @apply hover:-translate-y-1;
-}
-</style>

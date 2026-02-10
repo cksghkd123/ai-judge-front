@@ -1,10 +1,15 @@
 <template>
-  <main class="page">
-    <section class="card">
-      <h1 class="title">땅땅땅</h1>
-      <h3 class="subtitle">AI 판사</h3>
-      <p class="tagline">딱. 정해드립니다.</p>
-      <NuxtLink class="btn" to="/sign-in">시작하기</NuxtLink>
+  <main class="min-h-screen flex items-center justify-center p-6 bg-paper text-ink font-body">
+    <section class="w-full max-w-md text-center flex flex-col gap-4">
+      <h1 class="font-heading font-extrabold tracking-tight text-3xl m-0">땅땅땅</h1>
+      <h2 class="font-doodle text-xl m-0 text-ink/80">AI 판사</h2>
+      <p class="font-body text-ink/70 m-0">딱. 정해드립니다.</p>
+      <NuxtLink
+        to="/sign-in"
+        class="font-ui font-semibold inline-block mt-2 py-3 px-6 rounded-lg border-2 border-ink bg-ink text-paper shadow-hard no-underline transition duration-150 ease-out hover:-translate-y-1"
+      >
+        시작하기
+      </NuxtLink>
     </section>
   </main>
 </template>
@@ -22,54 +27,3 @@ watch(
   { immediate: true },
 )
 </script>
-
-<style scoped>
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: #f7f7f9;
-  color: #111;
-}
-
-.card {
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  display: grid;
-  gap: 16px;
-}
-
-.title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.tagline {
-  margin: 0;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.btn {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #18181b;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: opacity 0.15s ease;
-}
-
-.btn:hover {
-  opacity: 0.9;
-}
-</style>

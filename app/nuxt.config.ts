@@ -6,7 +6,9 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss', '@nuxtjs/google-fonts'],
   googleFonts: {
     families: {
-      'Gamja Flower': true,
+      'Nanum Myeongjo': { wght: [400, 700, 800] },
+      'Nanum Pen Script': true,
+      Jua: true,
       'Gowun Dodum': true,
     },
   },

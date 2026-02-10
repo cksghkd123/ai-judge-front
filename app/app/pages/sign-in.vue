@@ -1,18 +1,18 @@
 <template>
-  <main class="page">
+  <main class="min-h-screen flex items-center justify-center p-6 font-body bg-paper text-ink">
     <section class="card">
       <header class="header">
-        <p class="eyebrow">AI 판사</p>
-        <h1 class="title">로그인</h1>
-        <p class="subtitle">카카오나 구글로 10초 만에 시작하세요.</p>
+        <p class="eyebrow font-doodle">AI 판사</p>
+        <h1 class="title font-heading font-extrabold tracking-tight">로그인</h1>
+        <p class="subtitle font-body">카카오나 구글로 10초 만에 시작하세요.</p>
       </header>
 
       <div class="buttons">
-        <button class="btn btn-kakao" :disabled="loading || !isConfigured" @click="signIn('kakao')">
+        <button class="btn btn-kakao font-ui" :disabled="loading || !isConfigured" @click="signIn('kakao')">
           카카오로 로그인
         </button>
         <button
-          class="btn btn-google"
+          class="btn btn-google font-ui"
           :disabled="loading || !isConfigured"
           @click="signIn('google')"
         >
@@ -20,9 +20,9 @@
         </button>
       </div>
 
-      <p v-if="loading" class="status">로그인 중...</p>
-      <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-      <p v-if="session && !loading" class="status">이미 로그인되어 있어요. 이동 중...</p>
+      <p v-if="loading" class="status font-body">로그인 중...</p>
+      <p v-if="errorMessage" class="error font-body">{{ errorMessage }}</p>
+      <p v-if="session && !loading" class="status font-body">이미 로그인되어 있어요. 이동 중...</p>
     </section>
   </main>
 </template>
@@ -97,33 +97,14 @@ watch([isReady, session], ([ready, sess]) => {
 </script>
 
 <style scoped>
-:global(body) {
-  margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  background: #f7f7f9;
-  color: #111;
-}
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
 .card {
   width: 100%;
   max-width: 420px;
-  background: #fff;
-  border-radius: 20px;
+  background: var(--tw-color-paper, #fffdf5);
+  border: 4px solid var(--tw-color-ink, #18181b);
+  border-radius: 0.5rem;
   padding: 28px 24px;
-  box-shadow: 0 10px 30px rgba(17, 17, 17, 0.08);
+  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1);
   display: grid;
   gap: 20px;
 }
@@ -159,15 +140,13 @@ watch([isReady, session], ([ready, sess]) => {
 }
 
 .btn {
-  border: none;
-  border-radius: 12px;
+  border: 2px solid #18181b;
+  border-radius: 0.5rem;
   height: 52px;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition:
-    transform 0.06s ease,
-    box-shadow 0.2s ease;
+  transition: transform 0.15s ease-out;
 }
 
 .btn:disabled {
@@ -193,15 +172,15 @@ watch([isReady, session], ([ready, sess]) => {
 .status {
   text-align: center;
   margin: 0;
-  color: #374151;
-  font-size: 14px;
+  font-size: 0.875rem;
+  color: rgb(24 24 27 / 0.8);
 }
 
 .error {
   text-align: center;
   margin: 0;
-  color: #dc2626;
-  font-size: 14px;
+  font-size: 0.875rem;
+  color: #ff4757;
 }
 
 @media (min-width: 960px) {

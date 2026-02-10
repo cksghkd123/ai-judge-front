@@ -21,11 +21,14 @@
 - **Secondary (Highlighter):** `#FFD32A` (형광펜 노랑) -> Tailwind: `bg-accent`
 - **Tertiary (Cool Doodle):** `#3742FA` (파란 볼펜 색) -> Tailwind: `bg-blue-pen`
 
-## 4. Typography (Korean & English)
-- **Headings (낙서 느낌):** 'Gamja Flower' (감자꽃) or 'Jua' (주아)
-    - *Use specifically for titles, buttons, and "Judge's Ruling".*
-- **Body (가독성+부드러움):** 'Gowun Dodum' (고운돋움) or 'Poor Story'
-    - *Must be readable but still feel handwritten.*
+## 4. Typography
+- **Headings (The "Judge" Look):** 'Nanum Myeongjo' (Extra Bold)
+    - *역설적으로 진지함을 연출해야 하는 판결 제목, 선고 문구에 사용.*
+    - *Tailwind: font-serif, tracking-tight*
+- **Accents (The "Doodle" Look):** 'Nanum Pen Script'
+    - *낙서 같은 부연 설명, "판사님의 한마디", "낙서장" 느낌의 요소에 사용.*
+- **Action/UI:** 'Jua' 또는 'Gowun Dodum'
+    - *버튼, 메뉴 등 기능적인 요소.*
 
 ## 5. UI Component Rules (The "Doodle" Look)
 - **Borders:** 모든 컨테이너와 버튼은 `border-2` 또는 `border-4`의 `border-ink`를 가짐.
