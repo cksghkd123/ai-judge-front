@@ -40,16 +40,6 @@
             placeholder="예: 접촉 사고 시 과실 비율"
           />
         </div>
-        <div class="flex flex-col gap-1">
-          <label for="opponent" class="font-ui text-sm font-semibold">상대 식별 (이메일 등, 선택)</label>
-          <input
-            id="opponent"
-            v-model="form.opponentIdentifier"
-            type="text"
-            class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 focus:border-ink outline-none transition duration-150"
-            placeholder="나중에 초대 링크로 보낼 예정이에요"
-          />
-        </div>
         <button
           type="submit"
           class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
@@ -71,7 +61,6 @@ const router = useRouter()
 
 const form = reactive({
   title: '',
-  opponentIdentifier: '',
   complaintSummary: '',
   issue: '',
 })
@@ -87,7 +76,6 @@ const onSubmit = () => {
       complaintSummary: form.complaintSummary,
       issue: form.issue.trim() || '논점 미기재',
       plaintiffId: user.value.id,
-      opponentIdentifier: form.opponentIdentifier?.trim() || undefined,
     })
     router.push(`/case/${caseData.id}/invite`)
   } finally {
