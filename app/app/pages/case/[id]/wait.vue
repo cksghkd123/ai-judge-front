@@ -35,7 +35,7 @@ onMounted(() => {
   const delay = 2500
   const t = setTimeout(() => {
     updateCase(caseId, {
-      status: 'verdict',
+      status: 'completed',
       verdictText:
         '원고와 피고의 주장을 검토한 결과, 본 재판소는 다음과 같이 판단한다.\n\n' +
         '1. 원고의 주장 요지: 고소장 및 제출 의견에 기재된 바와 같다.\n' +

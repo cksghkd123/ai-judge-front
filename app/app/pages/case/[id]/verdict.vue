@@ -1,6 +1,6 @@
 <template>
   <main class="min-h-screen flex flex-col items-center p-6 pb-12 bg-paper text-ink font-body">
-    <template v-if="caseData && caseData.status === 'verdict'">
+    <template v-if="caseData && (caseData.status === 'completed' || caseData.verdictText)">
       <article class="w-full max-w-2xl flex flex-col gap-6">
         <!-- 상단: 사건 제목 + 판결문 헤딩 -->
         <header class="text-center border-b-4 border-ink pb-4">
@@ -8,23 +8,56 @@
           <p class="font-heading font-bold tracking-tight text-xl m-0 mt-2">판결문</p>
         </header>
 
-        <!-- 1영역: 사건 요약 -->
+        <!-- 1영역: 사건 요약 + 논점 -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-paper">
           <h2 class="font-ui font-semibold text-sm m-0 mb-2">사건 요약</h2>
           <p class="m-0 text-ink/90 text-sm whitespace-pre-wrap">{{ caseData.complaintSummary }}</p>
+          <p v-if="caseData.issue" class="m-0 text-ink/80 text-sm mt-2">논점: {{ caseData.issue }}</p>
           <p class="m-0 text-ink/60 text-xs mt-2">사건 생성일: {{ formatDate(caseData.createdAt) }}</p>
         </section>
 
-        <!-- 2영역: 원고 의견·증거 -->
+        <!-- 2영역: 원고 증거 -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-paper">
-          <h2 class="font-ui font-semibold text-sm m-0 mb-2">원고 의견·증거</h2>
-          <p class="m-0 text-ink/90 text-sm whitespace-pre-wrap">{{ caseData.plaintiffSubmission || '(제출 내용 없음)' }}</p>
+          <h2 class="font-ui font-semibold text-sm m-0 mb-2">원고 증거</h2>
+          <template v-if="caseData.plaintiffEvidence?.length">
+            <ul class="list-none m-0 p-0 flex flex-col gap-3">
+              <li
+                v-for="e in caseData.plaintiffEvidence"
+                :key="e.id"
+                class="border-2 border-ink rounded-lg p-3"
+              >
+                <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
+                <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">{{ e.content }}</p>
+                <template v-else>
+                  <img v-if="e.content" :src="e.content" alt="원고 첨부" class="max-w-full max-h-48 object-contain rounded border border-ink mt-1">
+                  <p v-if="e.description" class="m-0 text-sm text-ink/80 mt-1">{{ e.description }}</p>
+                </template>
+              </li>
+            </ul>
+          </template>
+          <p v-else class="m-0 text-ink/70 text-sm">(제출 증거 없음)</p>
         </section>
 
-        <!-- 3영역: 피고 의견·증거 -->
+        <!-- 3영역: 피고 증거 -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-paper">
-          <h2 class="font-ui font-semibold text-sm m-0 mb-2">피고 의견·증거</h2>
-          <p class="m-0 text-ink/90 text-sm whitespace-pre-wrap">{{ caseData.defendantSubmission || '(제출 내용 없음)' }}</p>
+          <h2 class="font-ui font-semibold text-sm m-0 mb-2">피고 증거</h2>
+          <template v-if="caseData.defendantEvidence?.length">
+            <ul class="list-none m-0 p-0 flex flex-col gap-3">
+              <li
+                v-for="e in caseData.defendantEvidence"
+                :key="e.id"
+                class="border-2 border-ink rounded-lg p-3"
+              >
+                <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
+                <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">{{ e.content }}</p>
+                <template v-else>
+                  <img v-if="e.content" :src="e.content" alt="피고 첨부" class="max-w-full max-h-48 object-contain rounded border border-ink mt-1">
+                  <p v-if="e.description" class="m-0 text-sm text-ink/80 mt-1">{{ e.description }}</p>
+                </template>
+              </li>
+            </ul>
+          </template>
+          <p v-else class="m-0 text-ink/70 text-sm">(제출 증거 없음)</p>
         </section>
 
         <!-- 4영역: AI 판결문 본문 -->
@@ -84,5 +117,10 @@ function formatDate(iso: string) {
   } catch {
     return iso
   }
+}
+
+function evidenceTypeLabel(type: string): string {
+  const map: Record<string, string> = { text: '텍스트', chat: '채팅 캡처', photo: '사진/캡처' }
+  return map[type] ?? type
 }
 </script>

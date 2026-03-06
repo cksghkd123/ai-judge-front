@@ -2,12 +2,12 @@
   <main class="min-h-screen flex flex-col items-center p-6 bg-paper text-ink font-body">
     <template v-if="caseData">
       <section class="w-full max-w-md flex flex-col gap-5 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
-        <h1 class="font-heading font-extrabold tracking-tight text-xl m-0">초대 링크 공유</h1>
+        <h1 class="font-heading font-extrabold tracking-tight text-xl m-0">내용증명 전달용 링크</h1>
         <p class="m-0 text-ink/80 text-sm">
-          위 링크를 상대방에게 보내주세요. 수락하면 매칭이 완료됩니다.
+          위 링크를 상대에게 보내면, 상대가 이 내용증명에 대해 참여·답변할 수 있어요.
         </p>
         <div class="flex flex-col gap-2">
-          <label class="font-ui text-sm font-semibold">초대 링크</label>
+          <label class="font-ui text-sm font-semibold">공유 링크</label>
           <div class="flex gap-2">
             <input
               :value="inviteUrl"
@@ -53,10 +53,11 @@ const { getCase } = useCaseStore()
 const caseData = computed(() => getCase(caseId))
 
 const inviteUrl = computed(() => {
+  if (!caseData.value?.inviteToken) return ''
   if (import.meta.client && typeof window !== 'undefined') {
-    return `${window.location.origin}/case/${caseId}/join`
+    return `${window.location.origin}/cases/${caseId}?token=${encodeURIComponent(caseData.value.inviteToken)}`
   }
-  return `/case/${caseId}/join`
+  return `/cases/${caseId}?token=${encodeURIComponent(caseData.value.inviteToken)}`
 })
 
 const copied = ref(false)
