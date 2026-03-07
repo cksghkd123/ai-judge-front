@@ -1,55 +1,78 @@
 <template>
-  <main class="min-h-screen flex flex-col items-center p-6 pb-12 bg-paper text-ink font-body">
-    <section class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
-      <h1 class="font-heading font-extrabold tracking-tight text-2xl m-0">대시보드</h1>
-      <p class="m-0 text-ink/80">
-        환영해요, {{ user?.user_metadata?.full_name ?? user?.email ?? '판사님' }}!
+  <main class="min-h-screen flex flex-col p-6 pb-12 bg-paper text-ink font-body">
+    <div class="w-full max-w-2xl mx-auto flex flex-col gap-6">
+      <p class="m-0 text-ink/80 text-sm">
+        {{ user?.user_metadata?.full_name ?? user?.email ?? '사용자' }}님, 환영해요.
       </p>
 
-      <!-- 진행 중인 사건 목록 -->
-      <div v-if="myCases.length > 0" class="flex flex-col gap-2">
-        <h2 class="font-ui font-semibold text-sm m-0">진행 중인 사건</h2>
-        <ul class="list-none m-0 p-0 flex flex-col gap-2">
-          <li v-for="c in myCases" :key="c.id">
-            <NuxtLink
-              :to="`/case/${c.id}`"
-              class="block border-2 border-ink rounded-lg p-3 no-underline text-ink transition duration-150 ease-out hover:-translate-y-1 hover:bg-accent/20"
-            >
-              <p class="font-ui font-semibold m-0">{{ c.title }}</p>
-              <p class="m-0 text-sm text-ink/70 mt-1">
-                {{ caseStatusLabel(c.status) }}
-                <span class="text-ink/50">·</span>
-                {{ myRoleInCase(c) }}
-              </p>
-            </NuxtLink>
-          </li>
-        </ul>
-      </div>
-      <p v-else class="m-0 text-sm text-ink/60">진행 중인 사건이 없어요. 내용증명을 보내 보세요!</p>
+      <!-- 진행 중인 사건 -->
+      <section class="flex flex-col gap-2">
+        <h2 class="font-ui font-semibold text-sm m-0 text-ink/80">진행 중인 사건</h2>
+        <div v-if="ongoingCases.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <NuxtLink
+            v-for="c in ongoingCases"
+            :key="c.id"
+            :to="`/case/${c.id}`"
+            class="block border-2 border-ink rounded-lg p-4 no-underline text-ink bg-paper transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/5"
+          >
+            <p class="font-ui font-semibold m-0 text-ink line-clamp-2">{{ c.title }}</p>
+            <p class="m-0 text-xs text-ink/60 mt-1.5">
+              {{ caseStatusLabel(c.status) }}
+              <span class="text-ink/40">·</span>
+              {{ myRoleInCase(c) }}
+            </p>
+          </NuxtLink>
+        </div>
+        <p v-else class="m-0 text-sm text-ink/50">진행 중인 사건이 없어요.</p>
+      </section>
 
-      <div class="flex flex-col gap-2 mt-2">
-        <NuxtLink
-          to="/complaint/new"
-          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard text-center no-underline transition duration-150 ease-out hover:-translate-y-1"
-        >
-          내용증명 보내기
-        </NuxtLink>
+      <!-- 완료된 사건 -->
+      <section class="flex flex-col gap-2">
+        <h2 class="font-ui font-semibold text-sm m-0 text-ink/80">완료된 사건</h2>
+        <div v-if="completedCases.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <NuxtLink
+            v-for="c in completedCases"
+            :key="c.id"
+            :to="`/case/${c.id}/verdict`"
+            class="block border-2 border-ink rounded-lg p-4 no-underline text-ink bg-paper transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/5"
+          >
+            <p class="font-ui font-semibold m-0 text-ink line-clamp-2">{{ c.title }}</p>
+            <p class="m-0 text-xs text-ink/60 mt-1.5">
+              {{ myRoleInCase(c) }}
+              <span class="text-ink/40">·</span>
+              판결 완료
+            </p>
+          </NuxtLink>
+        </div>
+        <p v-else class="m-0 text-sm text-ink/50">완료된 사건이 없어요.</p>
+      </section>
+
+      <!-- 내용증명 보내기 -->
+      <NuxtLink
+        to="/complaint/new"
+        class="block w-full border-2 border-ink rounded-lg px-4 py-3 font-ui font-semibold text-ink bg-paper text-center no-underline transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/5"
+      >
+        내용증명 보내기
+      </NuxtLink>
+
+      <!-- 하단: 내 정보, 로그아웃 -->
+      <div class="flex flex-col gap-2 mt-4 pt-4 border-t-2 border-ink/20">
         <NuxtLink
           to="/profile"
-          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-blue-pen text-paper shadow-hard text-center no-underline transition duration-150 ease-out hover:-translate-y-1"
+          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold text-ink bg-paper text-center no-underline transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/5"
         >
           내 정보
         </NuxtLink>
         <button
           type="button"
-          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-ink text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold text-ink bg-paper transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/10 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
           :disabled="loggingOut"
           @click="handleSignOut"
         >
           {{ loggingOut ? '로그아웃 중...' : '로그아웃' }}
         </button>
       </div>
-    </section>
+    </div>
   </main>
 </template>
 
@@ -66,10 +89,14 @@ const loggingOut = ref(false)
 const myCases = computed(() => {
   const uid = user.value?.id
   if (!uid) return []
-  return Object.values(cases.value).filter(
-    (c) => c.plaintiffId === uid || c.defendantId === uid
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  return Object.values(cases.value)
+    .filter((c) => c.plaintiffId === uid || c.defendantId === uid)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 })
+
+const ongoingCases = computed(() => myCases.value.filter((c) => c.status !== 'completed'))
+
+const completedCases = computed(() => myCases.value.filter((c) => c.status === 'completed'))
 
 function caseStatusLabel(status: CaseData['status']): string {
   const map: Record<CaseData['status'], string> = {
