@@ -1,6 +1,8 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { defineNuxtPlugin, useRuntimeConfig } from 'nuxt/app'
 
+/** PKCE code verifier를 쿠키에 저장해 리다이렉트 후에도 유지 (SSR/다른 탭 대응) */
 export default defineNuxtPlugin<{ supabase: SupabaseClient | null }>(() => {
   const config = useRuntimeConfig()
   const supabaseUrl = config.public.supabaseUrl as string | undefined
@@ -15,12 +17,7 @@ export default defineNuxtPlugin<{ supabase: SupabaseClient | null }>(() => {
     }
   }
 
-  const supabase = createClient(supabaseUrl, supabasePublishableKey, {
-    auth: {
-      flowType: 'pkce',
-      detectSessionInUrl: true
-    }
-  })
+  const supabase = createBrowserClient(supabaseUrl, supabasePublishableKey)
 
   return {
     provide: {
