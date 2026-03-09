@@ -2,27 +2,48 @@
   <main class="min-h-screen flex items-center justify-center p-6 font-body bg-paper text-ink">
     <section class="card">
       <header class="header">
-        <p class="eyebrow font-doodle">AI 판사</p>
+        <p class="eyebrow font-doodle">땅땅땅</p>
         <h1 class="title font-heading font-extrabold tracking-tight">로그인</h1>
-        <p class="subtitle font-body">카카오나 구글로 10초 만에 시작하세요.</p>
+        <p class="subtitle font-body">카카오나 구글로 시작하세요.</p>
       </header>
 
+      <!-- 카카오/구글 공식 디자인 가이드라인 준수 -->
       <div class="buttons">
-        <button class="btn btn-kakao font-ui" :disabled="loading || !isConfigured" @click="signIn('kakao')">
-          카카오로 로그인
+        <button
+          type="button"
+          class="btn btn-kakao"
+          :disabled="loading || !isConfigured"
+          @click="signIn('kakao')"
+        >
+          <img
+            src="https://www.svgrepo.com/show/368252/kakao.svg"
+            alt=""
+            width="20"
+            height="20"
+            class="btn-social-icon"
+          />
+          <span class="btn-label">카카오 로그인</span>
         </button>
         <button
-          class="btn btn-google font-ui"
+          type="button"
+          class="btn btn-google"
           :disabled="loading || !isConfigured"
           @click="signIn('google')"
         >
-          구글로 로그인
+          <img
+            src="https://www.svgrepo.com/show/303108/google-icon-logo.svg"
+            alt=""
+            width="20"
+            height="20"
+            class="btn-social-icon"
+          />
+          <span class="btn-label">구글 로그인</span>
         </button>
       </div>
 
       <p v-if="loading" class="status font-body">로그인 중...</p>
       <p v-if="errorMessage" class="error font-body">{{ errorMessage }}</p>
-      <p v-if="session && !loading" class="status font-body">이미 로그인되어 있어요. 이동 중...</p>
+      <p v-if="session && !loading" class="status font-body">이동 중...</p>
     </section>
   </main>
 </template>
@@ -140,13 +161,37 @@ watch([isReady, session], ([ready, sess]) => {
 }
 
 .btn {
-  border: 2px solid #18181b;
-  border-radius: 0.5rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
   height: 52px;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 0 20px;
   cursor: pointer;
   transition: transform 0.15s ease-out;
+  font-family: 'Roboto', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.btn-social-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.btn-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  pointer-events: none;
 }
 
 .btn:disabled {
@@ -154,19 +199,24 @@ watch([isReady, session], ([ready, sess]) => {
   cursor: not-allowed;
 }
 
-.btn:active {
+.btn:active:not(:disabled) {
   transform: translateY(1px);
 }
 
+/* 카카오: Container #FEE500, Symbol #000000, Label 85% (Kakao Design Guide) */
 .btn-kakao {
   background: #fee500;
-  color: #191919;
+  color: rgba(0, 0, 0, 0.85);
+  border: none;
+  border-radius: 12px;
 }
 
+/* 구글: Light #FFFFFF, Stroke #747775 (Google Branding) */
 .btn-google {
-  background: #fff;
-  color: #111;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #1f1f1f;
+  border: 1px solid #747775;
+  border-radius: 12px;
 }
 
 .status {
