@@ -12,7 +12,7 @@
         <button
           type="button"
           class="btn btn-kakao"
-          :disabled="loading || !isConfigured"
+          :disabled="isButtonDisabled"
           @click="signIn('kakao')"
         >
           <img
@@ -27,7 +27,7 @@
         <button
           type="button"
           class="btn btn-google"
-          :disabled="loading || !isConfigured"
+          :disabled="isButtonDisabled"
           @click="signIn('google')"
         >
           <img
@@ -43,7 +43,7 @@
 
       <p v-if="loading" class="status font-body">로그인 중...</p>
       <p v-if="errorMessage" class="error font-body">{{ errorMessage }}</p>
-      <p v-if="session && !loading" class="status font-body">이동 중...</p>
+      <p v-if="session && !loading && !errorMessage" class="status font-body">이동 중...</p>
     </section>
   </main>
 </template>
@@ -59,6 +59,9 @@ const route = useRoute()
 
 const loading = ref(false)
 const errorMessage = ref('')
+/** 클라이언트 마운트 후에만 disabled 적용 → 서버/클라이언트 렌더 일치로 hydration 경고 방지, 뒤로가기 시 버튼 비활성화 방지 */
+const isClient = ref(false)
+const isButtonDisabled = computed(() => isClient.value && (loading.value || !isConfigured.value))
 
 const signIn = async (provider: Provider) => {
   errorMessage.value = ''
@@ -83,30 +86,29 @@ const signIn = async (provider: Provider) => {
   }
 }
 
-// OAuth 콜백: URL에 code가 있으면 세션으로 교환 후 홈으로
+// OAuth 콜백: code가 있으면 서버 API로 보내서 교환 (PKCE 쿠키가 서버 요청에 포함됨)
 onMounted(async () => {
-  if (!supabase) {
-    errorMessage.value = 'Supabase 환경변수가 설정되지 않았어요.'
+  isClient.value = true
+
+  const code = route.query.code as string | undefined
+  const errorFromCallback = route.query.error as string | undefined
+
+  if (errorFromCallback) {
+    errorMessage.value =
+      decodeURIComponent(errorFromCallback) ||
+      '로그인 처리에 실패했어요. 잠시 후 다시 시도해주세요.'
+    await router.replace({ path: '/sign-in', query: {} })
     return
   }
 
-  const code = route.query.code as string | undefined
-
   if (code) {
-    loading.value = true
-    const { data: exchangeData, error: exchangeError } =
-      await supabase.auth.exchangeCodeForSession(code)
-    loading.value = false
-    if (exchangeError) {
-      errorMessage.value =
-        exchangeError.message || '로그인 처리에 실패했어요. 잠시 후 다시 시도해주세요.'
-      await router.replace({ path: '/sign-in', query: {} })
-      return
-    }
-    if (exchangeData.session) {
-      await router.replace('/dashboard')
-    }
+    // 서버에서 code ↔ session 교환 (쿠키에 있는 code_verifier 사용). 완료 시 /dashboard로 리다이렉트됨.
+    window.location.href = `/api/auth/callback?code=${encodeURIComponent(code)}`
     return
+  }
+
+  if (!supabase) {
+    errorMessage.value = 'Supabase 환경변수가 설정되지 않았어요.'
   }
 })
 

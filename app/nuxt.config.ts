@@ -18,7 +18,7 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabasePublishableKey: process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
       supabaseStorageBucket: process.env.NUXT_PUBLIC_SUPABASE_STORAGE_BUCKET || '',
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || process.env.API_BASE || ''
-    }
-  }
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || process.env.API_BASE || '',
+    },
+  },
 })
