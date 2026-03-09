@@ -19,7 +19,7 @@
             <p class="m-0 text-xs text-ink/60 mt-1.5">
               {{ caseStatusLabel(c.status) }}
               <span class="text-ink/40">·</span>
-              {{ myRoleInCase(c) }}
+              {{ roleLabel(c) }}
             </p>
           </NuxtLink>
         </div>
@@ -38,7 +38,7 @@
           >
             <p class="font-ui font-semibold m-0 text-ink line-clamp-2">{{ c.title }}</p>
             <p class="m-0 text-xs text-ink/60 mt-1.5">
-              {{ myRoleInCase(c) }}
+              {{ roleLabel(c) }}
               <span class="text-ink/40">·</span>
               판결 완료
             </p>
@@ -77,12 +77,12 @@
 </template>
 
 <script setup lang="ts">
-import type { CaseData } from '~/composables/useCaseStore'
+import type { CaseData, CaseListItemApi } from '~/composables/useCaseStore'
 
 definePageMeta({ middleware: 'auth' })
 
 const { user, signOut } = useAuth()
-const { cases } = useCaseStore()
+const { cases, apiCaseList, isApiMode, fetchCasesFromApi } = useCaseStore()
 const router = useRouter()
 const loggingOut = ref(false)
 
@@ -94,12 +94,22 @@ const myCases = computed(() => {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 })
 
-const ongoingCases = computed(() => myCases.value.filter((c) => c.status !== 'completed'))
+const ongoingCases = computed(() => {
+  if (isApiMode()) {
+    return apiCaseList.value.filter((c) => c.status !== 'completed')
+  }
+  return myCases.value.filter((c) => c.status !== 'completed')
+})
 
-const completedCases = computed(() => myCases.value.filter((c) => c.status === 'completed'))
+const completedCases = computed(() => {
+  if (isApiMode()) {
+    return apiCaseList.value.filter((c) => c.status === 'completed')
+  }
+  return myCases.value.filter((c) => c.status === 'completed')
+})
 
-function caseStatusLabel(status: CaseData['status']): string {
-  const map: Record<CaseData['status'], string> = {
+function caseStatusLabel(status: string): string {
+  const map: Record<string, string> = {
     pending: '상대 참여 대기',
     active: '증거 제출 중',
     reviewing: '상대 증거 검토 중',
@@ -109,13 +119,18 @@ function caseStatusLabel(status: CaseData['status']): string {
   return map[status] ?? status
 }
 
-function myRoleInCase(c: CaseData): string {
+function roleLabel(c: CaseData | CaseListItemApi): string {
+  if ('my_role' in c) return c.my_role === 'creator' ? '원고' : '피고'
   const uid = user.value?.id
   if (!uid) return ''
   if (c.plaintiffId === uid) return '원고'
   if (c.defendantId === uid) return '피고'
   return ''
 }
+
+onMounted(() => {
+  if (isApiMode()) void fetchCasesFromApi()
+})
 
 const handleSignOut = async () => {
   loggingOut.value = true

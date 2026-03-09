@@ -67,11 +67,11 @@ const form = reactive({
 
 const submitting = ref(false)
 
-const onSubmit = () => {
+const onSubmit = async () => {
   if (!user.value?.id) return
   submitting.value = true
   try {
-    const caseData = createCase({
+    const caseData = await createCase({
       title: form.title,
       complaintSummary: form.complaintSummary,
       issue: form.issue.trim() || '논점 미기재',

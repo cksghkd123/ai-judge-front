@@ -162,10 +162,39 @@ function saveToStorage(cases: Record<string, CaseData>) {
   }
 }
 
+export type CaseListItemApi = {
+  id: string
+  title: string
+  status: string
+  created_at: string
+  my_role: 'creator' | 'counterparty'
+}
+
+function isApiMode(): boolean {
+  const config = useRuntimeConfig()
+  return Boolean((config.public.apiBase as string)?.replace(/\/$/, ''))
+}
+
+function mapEvidenceResponseToEvidence(
+  r: { id: string; type: string; content: string | null; file_path: string | null; description: string | null },
+  submittedBy: EvidenceSubmittedBy
+): Evidence {
+  const content = r.content ?? (r.file_path || '')
+  return {
+    id: r.id,
+    type: r.type as EvidenceType,
+    content,
+    description: r.description ?? undefined,
+    submittedBy,
+  }
+}
+
 export function useCaseStore() {
   const cases = useState<Record<string, CaseData>>('case-store', () => ({}))
+  const apiCaseList = useState<CaseListItemApi[]>('case-api-list', () => [])
 
   onMounted(() => {
+    if (isApiMode()) return
     const stored = loadFromStorage()
     if (Object.keys(stored).length > 0) {
       cases.value = { ...cases.value, ...stored }
@@ -175,18 +204,47 @@ export function useCaseStore() {
   watch(
     cases,
     (val) => {
+      if (isApiMode()) return
       saveToStorage(val)
     },
     { deep: true }
   )
 
-  function createCase(payload: {
+  async function createCase(payload: {
     title: string
     complaintSummary: string
     issue: string
     plaintiffId: string
     opponentIdentifier?: string
-  }): CaseData {
+  }): Promise<CaseData> {
+    if (isApiMode()) {
+      const api = useCaseApi()
+      const res = await api.createCase({
+        title: payload.title,
+        description: payload.complaintSummary,
+        issue: payload.issue,
+      })
+      const caseData: CaseData = {
+        id: res.id,
+        title: res.title,
+        complaintSummary: res.description,
+        issue: res.issue,
+        status: res.status as CaseStatus,
+        createdAt: res.created_at,
+        plaintiffId: res.created_by,
+        inviteToken: res.invite_token,
+        plaintiffEvidence: [],
+        defendantEvidence: [],
+        plaintiffEvidenceComplete: false,
+        defendantEvidenceComplete: false,
+        plaintiffReviews: {},
+        defendantReviews: {},
+        plaintiffReviewComplete: false,
+        defendantReviewComplete: false,
+      }
+      cases.value = { ...cases.value, [res.id]: caseData }
+      return caseData
+    }
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
     const inviteToken = crypto.randomUUID()
@@ -226,16 +284,86 @@ export function useCaseStore() {
     }
   }
 
-  function joinCase(caseId: string, inviteToken: string, defendantId: string): boolean {
+  async function joinCase(caseId: string, inviteToken: string, _defendantId: string): Promise<boolean> {
+    if (isApiMode()) {
+      const api = useCaseApi()
+      await api.joinCase({ case_id: caseId, invite_token: inviteToken })
+      return true
+    }
     const c = cases.value[caseId]
     if (!c || c.inviteToken !== inviteToken || c.defendantId) return false
-    updateCase(caseId, { defendantId, status: 'active' })
+    updateCase(caseId, { defendantId: _defendantId, status: 'active' })
     return true
   }
 
-  function addEvidence(caseId: string, evidence: Evidence) {
+  async function fetchCasesFromApi(): Promise<void> {
+    if (!isApiMode()) return
+    const api = useCaseApi()
+    const list = await api.listCases()
+    apiCaseList.value = list
+  }
+
+  async function fetchCaseFromApi(caseId: string): Promise<CaseData | undefined> {
+    if (!isApiMode()) return getCase(caseId)
+    const api = useCaseApi()
+    const [detail, myEvidence, opponentEvidence] = await Promise.all([
+      api.getCaseDetail(caseId),
+      api.listMyEvidence(caseId),
+      api.listOpponentEvidence(caseId),
+    ])
+    const plaintiffId = detail.created_by
+    const defendantId = detail.counterpart_id ?? undefined
+    const mySubmittedBy: EvidenceSubmittedBy = detail.my_role === 'creator' ? 'plaintiff' : 'defendant'
+    const oppSubmittedBy: EvidenceSubmittedBy = detail.my_role === 'creator' ? 'defendant' : 'plaintiff'
+    const plaintiffEvidence = (detail.my_role === 'creator' ? myEvidence : opponentEvidence).map((r) =>
+      mapEvidenceResponseToEvidence(r, 'plaintiff')
+    )
+    const defendantEvidence = (detail.my_role === 'creator' ? opponentEvidence : myEvidence).map((r) =>
+      mapEvidenceResponseToEvidence(r, 'defendant')
+    )
+    const caseData: CaseData = {
+      id: detail.id,
+      title: detail.title,
+      complaintSummary: detail.description,
+      issue: detail.issue,
+      status: detail.status as CaseStatus,
+      createdAt: detail.created_at,
+      plaintiffId,
+      defendantId,
+      inviteToken: '', // not returned by detail
+      plaintiffEvidence,
+      defendantEvidence,
+      plaintiffEvidenceComplete: false,
+      defendantEvidenceComplete: false,
+      plaintiffReviews: {},
+      defendantReviews: {},
+      plaintiffReviewComplete: false,
+      defendantReviewComplete: false,
+    }
+    cases.value = { ...cases.value, [caseId]: caseData }
+    return caseData
+  }
+
+  async function addEvidence(caseId: string, evidence: Evidence, file?: File): Promise<void> {
     const c = cases.value[caseId]
     if (!c) return
+    if (isApiMode()) {
+      const api = useCaseApi()
+      const form: { type: 'text' | 'chat' | 'photo'; content?: string; description?: string; file?: File } = {
+        type: evidence.type,
+      }
+      if (evidence.type === 'text') form.content = evidence.content
+      else form.description = evidence.description
+      if (file) form.file = file
+      const res = await api.addEvidence(caseId, form)
+      const mapped = mapEvidenceResponseToEvidence(res, evidence.submittedBy)
+      if (evidence.submittedBy === 'plaintiff') {
+        updateCase(caseId, { plaintiffEvidence: [...c.plaintiffEvidence, mapped] })
+      } else {
+        updateCase(caseId, { defendantEvidence: [...c.defendantEvidence, mapped] })
+      }
+      return
+    }
     if (evidence.submittedBy === 'plaintiff') {
       updateCase(caseId, {
         plaintiffEvidence: [...c.plaintiffEvidence, evidence],
@@ -261,9 +389,15 @@ export function useCaseStore() {
     }
   }
 
-  function setEvidenceComplete(caseId: string, submittedBy: EvidenceSubmittedBy) {
+  async function setEvidenceComplete(caseId: string, submittedBy: EvidenceSubmittedBy): Promise<void> {
     const c = cases.value[caseId]
     if (!c) return
+    if (isApiMode()) {
+      const api = useCaseApi()
+      await api.completeEvidence(caseId)
+      await fetchCaseFromApi(caseId)
+      return
+    }
     if (submittedBy === 'plaintiff') {
       updateCase(caseId, { plaintiffEvidenceComplete: true })
     } else {
@@ -305,6 +439,7 @@ export function useCaseStore() {
 
   return {
     cases,
+    apiCaseList,
     createCase,
     getCase,
     updateCase,
@@ -314,5 +449,8 @@ export function useCaseStore() {
     setEvidenceComplete,
     setReview,
     setReviewComplete,
+    isApiMode,
+    fetchCasesFromApi,
+    fetchCaseFromApi,
   }
 }

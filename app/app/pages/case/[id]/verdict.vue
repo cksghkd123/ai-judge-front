@@ -51,7 +51,7 @@
                 <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
                 <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">{{ e.content }}</p>
                 <template v-else>
-                  <img v-if="e.content" :src="e.content" alt="피고 첨부" class="max-w-full max-h-48 object-contain rounded border border-ink mt-1">
+                  <img v-if="e.content" :src="getEvidenceImageUrl(e.content)" alt="피고 첨부" class="max-w-full max-h-48 object-contain rounded border border-ink mt-1">
                   <p v-if="e.description" class="m-0 text-sm text-ink/80 mt-1">{{ e.description }}</p>
                 </template>
               </li>
@@ -104,6 +104,7 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const caseId = route.params.id as string
 const { getCase } = useCaseStore()
+const { getEvidenceImageUrl } = useCaseApi()
 
 const caseData = computed(() => getCase(caseId))
 

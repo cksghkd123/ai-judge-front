@@ -46,7 +46,7 @@
                   <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
                   <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">{{ e.content }}</p>
                   <template v-else>
-                    <img v-if="e.content" :src="e.content" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink">
+                    <img v-if="e.content" :src="getEvidenceImageUrl(e.content)" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink">
                     <p v-if="e.description" class="m-0 text-sm text-ink/80">{{ e.description }}</p>
                   </template>
                 </li>
@@ -63,7 +63,7 @@
                   <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
                   <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">{{ e.content }}</p>
                   <template v-else>
-                    <img v-if="e.content" :src="e.content" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink">
+                    <img v-if="e.content" :src="getEvidenceImageUrl(e.content)" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink">
                     <p v-if="e.description" class="m-0 text-sm text-ink/80">{{ e.description }}</p>
                   </template>
                   <button
@@ -155,7 +155,7 @@
                 <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
                 <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">{{ e.content }}</p>
                 <template v-else>
-                  <img v-if="e.content" :src="e.content" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink mt-1">
+                  <img v-if="e.content" :src="getEvidenceImageUrl(e.content)" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink mt-1">
                   <p v-if="e.description" class="m-0 text-sm text-ink/80 mt-1">{{ e.description }}</p>
                 </template>
                 <div class="mt-2 flex gap-2 items-start">
@@ -256,8 +256,16 @@ const {
   setEvidenceComplete,
   setReview,
   setReviewComplete,
+  isApiMode,
+  fetchCaseFromApi,
 } = useCaseStore()
 const { user } = useAuth()
+const { getEvidenceImageUrl } = useCaseApi()
+
+await useAsyncData(`case-${caseId}`, async () => {
+  if (isApiMode()) return fetchCaseFromApi(caseId)
+  return null
+})
 
 const caseData = computed(() => getCase(caseId))
 
@@ -343,27 +351,38 @@ function evidenceTypeLabel(t: string): string {
 const newEvidenceType = ref<EvidenceType>('text')
 const newEvidenceContent = ref('')
 const newEvidenceDescription = ref('')
+const newEvidenceFile = ref<File | null>(null)
 const submitting = ref(false)
 
 const canAddEvidence = computed(() => {
   if (newEvidenceType.value === 'text') return newEvidenceContent.value.trim().length > 0
-  return newEvidenceContent.value.trim().length > 0
+  return newEvidenceContent.value.trim().length > 0 || Boolean(newEvidenceFile.value)
 })
 
-function addEvidence() {
+async function addEvidence() {
   if (!caseData.value || !myRole.value) return
-  if (newEvidenceType.value === 'text' && !newEvidenceContent.value.trim()) return
-  if (newEvidenceType.value !== 'text' && !newEvidenceContent.value.trim()) return
+  if (newEvidenceType.value === 'text') {
+    if (!newEvidenceContent.value.trim()) return
+  } else {
+    if (!newEvidenceContent.value.trim() && !newEvidenceFile.value) return
+  }
   const evidence: Evidence = {
     id: crypto.randomUUID(),
     type: newEvidenceType.value,
-    content: newEvidenceContent.value.trim(),
+    content: newEvidenceContent.value.trim() || '',
     description: newEvidenceDescription.value.trim() || undefined,
     submittedBy: myRole.value as EvidenceSubmittedBy,
   }
-  addEvidenceStore(caseId, evidence)
-  newEvidenceContent.value = ''
-  newEvidenceDescription.value = ''
+  const file = newEvidenceType.value !== 'text' ? newEvidenceFile.value ?? undefined : undefined
+  submitting.value = true
+  try {
+    await addEvidenceStore(caseId, evidence, file)
+    newEvidenceContent.value = ''
+    newEvidenceDescription.value = ''
+    newEvidenceFile.value = null
+  } finally {
+    submitting.value = false
+  }
 }
 
 function removeEvidence(evidenceId: string) {
@@ -376,6 +395,7 @@ function onEvidenceFileSelect(ev: Event) {
   const input = ev.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file || !file.type.startsWith('image/')) return
+  newEvidenceFile.value = file
   const reader = new FileReader()
   reader.onload = () => {
     newEvidenceContent.value = reader.result as string
@@ -384,11 +404,14 @@ function onEvidenceFileSelect(ev: Event) {
   input.value = ''
 }
 
-function submitEvidenceComplete() {
+async function submitEvidenceComplete() {
   if (!myRole.value) return
   submitting.value = true
-  setEvidenceComplete(caseId, myRole.value as EvidenceSubmittedBy)
-  submitting.value = false
+  try {
+    await setEvidenceComplete(caseId, myRole.value as EvidenceSubmittedBy)
+  } finally {
+    submitting.value = false
+  }
 }
 
 function getReview(evidenceId: string): { accepted: boolean; rebuttal?: string } {

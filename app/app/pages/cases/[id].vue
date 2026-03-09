@@ -11,17 +11,18 @@
         </NuxtLink>
       </section>
     </template>
-    <template v-else-if="caseData && validToken">
+    <template v-else-if="(caseData && validToken) || (isApiMode() && token && !caseData)">
       <section class="w-full max-w-md flex flex-col gap-5 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
         <h1 class="font-heading font-extrabold tracking-tight text-xl m-0">내용증명 참여</h1>
         <p class="m-0 text-ink/80">
           원고가 보낸 내용증명입니다. 참여하시겠어요?
         </p>
-        <div class="border-2 border-ink rounded-lg p-4 bg-paper">
+        <div v-if="caseData" class="border-2 border-ink rounded-lg p-4 bg-paper">
           <p class="font-ui font-semibold m-0">{{ caseData.title }}</p>
           <p class="text-sm text-ink/70 m-0 mt-2 line-clamp-3">{{ caseData.complaintSummary }}</p>
           <p class="text-sm text-ink/60 m-0 mt-1">논점: {{ caseData.issue }}</p>
         </div>
+        <p v-if="joinError" class="m-0 text-sm text-red-600">{{ joinError }}</p>
         <div class="flex gap-2">
           <button
             type="button"
@@ -70,14 +71,16 @@ const route = useRoute()
 const router = useRouter()
 const caseId = route.params.id as string
 const token = computed(() => (route.query.token as string) || '')
-const { getCase, joinCase } = useCaseStore()
+const { getCase, joinCase, isApiMode } = useCaseStore()
 const { user } = useAuth()
 
 const caseData = computed(() => getCase(caseId))
 
 const validToken = computed(() => {
   const c = caseData.value
-  return Boolean(c && token.value && c.inviteToken === token.value)
+  if (!token.value) return false
+  if (isApiMode() && !c) return true
+  return Boolean(c && c.inviteToken === token.value)
 })
 
 const isParticipant = computed(() => {
@@ -88,14 +91,21 @@ const isParticipant = computed(() => {
 })
 
 const loading = ref(false)
+const joinError = ref('')
 
-function accept() {
-  if (!caseData.value || !user.value?.id || !validToken.value) return
+async function accept() {
+  if (!user.value?.id || !token.value) return
+  if (!validToken.value) return
   loading.value = true
-  const ok = joinCase(caseId, token.value, user.value.id)
-  loading.value = false
-  if (ok) {
-    router.push(`/case/${caseId}`)
+  joinError.value = ''
+  try {
+    const ok = await joinCase(caseId, token.value, user.value.id)
+    if (ok) router.push(`/case/${caseId}`)
+  } catch (e: unknown) {
+    const msg = e && typeof e === 'object' && 'data' in e && (e as { data?: { detail?: string } }).data?.detail
+    joinError.value = typeof msg === 'string' ? msg : '참여에 실패했어요. 링크가 유효한지 확인해 주세요.'
+  } finally {
+    loading.value = false
   }
 }
 </script>
