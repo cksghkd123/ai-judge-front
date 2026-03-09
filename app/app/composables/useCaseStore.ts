@@ -344,6 +344,41 @@ export function useCaseStore() {
     return caseData
   }
 
+  /** 초대 링크에서 내용증명 요약만 조회 (참여 전). getCaseDetail만 호출해 제목·설명·논점만 표시용으로 씀. */
+  async function fetchCasePreviewFromApi(
+    caseId: string,
+    inviteToken: string
+  ): Promise<CaseData | undefined> {
+    if (!isApiMode()) return getCase(caseId)
+    const api = useCaseApi()
+    try {
+      const detail = await api.getCaseDetail(caseId)
+      const caseData: CaseData = {
+        id: detail.id,
+        title: detail.title,
+        complaintSummary: detail.description,
+        issue: detail.issue,
+        status: detail.status as CaseStatus,
+        createdAt: detail.created_at,
+        plaintiffId: detail.created_by,
+        defendantId: detail.counterpart_id ?? undefined,
+        inviteToken,
+        plaintiffEvidence: [],
+        defendantEvidence: [],
+        plaintiffEvidenceComplete: false,
+        defendantEvidenceComplete: false,
+        plaintiffReviews: {},
+        defendantReviews: {},
+        plaintiffReviewComplete: false,
+        defendantReviewComplete: false,
+      }
+      cases.value = { ...cases.value, [caseId]: caseData }
+      return caseData
+    } catch {
+      return undefined
+    }
+  }
+
   async function addEvidence(caseId: string, evidence: Evidence, file?: File): Promise<void> {
     const c = cases.value[caseId]
     if (!c) return
@@ -452,5 +487,6 @@ export function useCaseStore() {
     isApiMode,
     fetchCasesFromApi,
     fetchCaseFromApi,
+    fetchCasePreviewFromApi,
   }
 }

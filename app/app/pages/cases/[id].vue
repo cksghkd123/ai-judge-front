@@ -17,10 +17,19 @@
         <p class="m-0 text-ink/80">
           원고가 보낸 내용증명입니다. 참여하시겠어요?
         </p>
-        <div v-if="caseData" class="border-2 border-ink rounded-lg p-4 bg-paper">
-          <p class="font-ui font-semibold m-0">{{ caseData.title }}</p>
-          <p class="text-sm text-ink/70 m-0 mt-2 line-clamp-3">{{ caseData.complaintSummary }}</p>
-          <p class="text-sm text-ink/60 m-0 mt-1">논점: {{ caseData.issue }}</p>
+        <div class="border-2 border-ink rounded-lg p-4 bg-paper">
+          <p class="text-sm font-ui font-semibold m-0 mb-2 text-ink/70">내용증명 요약</p>
+          <template v-if="previewLoading">
+            <p class="m-0 text-ink/60 text-sm">불러오는 중...</p>
+          </template>
+          <template v-else-if="caseData">
+            <p class="font-ui font-semibold m-0 text-ink">{{ caseData.title }}</p>
+            <p class="text-sm text-ink/80 m-0 mt-2 whitespace-pre-wrap">{{ caseData.complaintSummary }}</p>
+            <p class="text-sm text-ink/60 m-0 mt-2">논점: {{ caseData.issue }}</p>
+          </template>
+          <template v-else>
+            <p class="m-0 text-sm text-ink/60">내용을 불러올 수 없어요. 참여하기를 누르면 사건에 참여할 수 있어요.</p>
+          </template>
         </div>
         <p v-if="joinError" class="m-0 text-sm text-red-600">{{ joinError }}</p>
         <div class="flex gap-2">
@@ -71,10 +80,19 @@ const route = useRoute()
 const router = useRouter()
 const caseId = route.params.id as string
 const token = computed(() => (route.query.token as string) || '')
-const { getCase, joinCase, isApiMode } = useCaseStore()
+const { getCase, joinCase, isApiMode, fetchCasePreviewFromApi } = useCaseStore()
 const { user } = useAuth()
 
 const caseData = computed(() => getCase(caseId))
+const previewLoading = ref(false)
+
+onMounted(async () => {
+  if (isApiMode() && token.value && !caseData.value) {
+    previewLoading.value = true
+    await fetchCasePreviewFromApi(caseId, token.value)
+    previewLoading.value = false
+  }
+})
 
 const validToken = computed(() => {
   const c = caseData.value
