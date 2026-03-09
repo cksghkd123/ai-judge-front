@@ -78,7 +78,7 @@ export function useCaseApi() {
   async function request<T>(
     method: string,
     path: string,
-    opts: { body?: object; query?: Record<string, string> } = {}
+    opts: { body?: object; query?: Record<string, string> } = {},
   ): Promise<T> {
     const url = `${baseUrl}${path}`
     const headers: Record<string, string> = {
@@ -116,7 +116,7 @@ export function useCaseApi() {
       content?: string
       description?: string
       file?: File
-    }
+    },
   ): Promise<EvidenceResponse> {
     const url = `${baseUrl}${PREFIX}/cases/${caseId}/evidence`
     const headers: Record<string, string> = {
