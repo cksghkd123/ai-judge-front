@@ -1,9 +1,4 @@
-export type CaseStatus =
-  | 'pending'
-  | 'active'
-  | 'reviewing'
-  | 'judging'
-  | 'completed'
+export type CaseStatus = 'pending' | 'active' | 'reviewing' | 'judging' | 'completed'
 
 export interface FaultRatio {
   plaintiff: number
@@ -100,8 +95,10 @@ function migrateFromLegacy(data: Record<string, unknown>): Record<string, CaseDa
       opponentIdentifier: c.opponentIdentifier as string | undefined,
       plaintiffEvidence: (c.plaintiffEvidence as Evidence[]) ?? plaintiffEvidence,
       defendantEvidence: (c.defendantEvidence as Evidence[]) ?? defendantEvidence,
-      plaintiffEvidenceComplete: (c.plaintiffEvidenceComplete as boolean) ?? plaintiffEvidence.length > 0,
-      defendantEvidenceComplete: (c.defendantEvidenceComplete as boolean) ?? defendantEvidence.length > 0,
+      plaintiffEvidenceComplete:
+        (c.plaintiffEvidenceComplete as boolean) ?? plaintiffEvidence.length > 0,
+      defendantEvidenceComplete:
+        (c.defendantEvidenceComplete as boolean) ?? defendantEvidence.length > 0,
       plaintiffReviews: (c.plaintiffReviews as Record<string, EvidenceReview>) ?? {},
       defendantReviews: (c.defendantReviews as Record<string, EvidenceReview>) ?? {},
       plaintiffReviewComplete: (c.plaintiffReviewComplete as boolean) ?? false,
@@ -120,7 +117,11 @@ function loadFromStorage(): Record<string, CaseData> {
       if (raw) {
         const parsed = JSON.parse(raw) as Record<string, unknown>
         const hasNewSchema = Object.values(parsed).some(
-          (c) => c && typeof c === 'object' && 'inviteToken' in c && Array.isArray((c as Record<string, unknown>).plaintiffEvidence)
+          (c) =>
+            c &&
+            typeof c === 'object' &&
+            'inviteToken' in c &&
+            Array.isArray((c as Record<string, unknown>).plaintiffEvidence),
         )
         if (hasNewSchema) {
           const normalized: Record<string, CaseData> = {}
@@ -131,8 +132,12 @@ function loadFromStorage(): Record<string, CaseData> {
               ...item,
               issue: (item.issue as string) ?? '',
               inviteToken: (item.inviteToken as string) ?? crypto.randomUUID(),
-              plaintiffEvidence: Array.isArray(item.plaintiffEvidence) ? item.plaintiffEvidence as Evidence[] : [],
-              defendantEvidence: Array.isArray(item.defendantEvidence) ? item.defendantEvidence as Evidence[] : [],
+              plaintiffEvidence: Array.isArray(item.plaintiffEvidence)
+                ? (item.plaintiffEvidence as Evidence[])
+                : [],
+              defendantEvidence: Array.isArray(item.defendantEvidence)
+                ? (item.defendantEvidence as Evidence[])
+                : [],
               plaintiffEvidenceComplete: (item.plaintiffEvidenceComplete as boolean) ?? false,
               defendantEvidenceComplete: (item.defendantEvidenceComplete as boolean) ?? false,
               plaintiffReviews: (item.plaintiffReviews as Record<string, EvidenceReview>) ?? {},
@@ -176,8 +181,14 @@ function isApiMode(): boolean {
 }
 
 function mapEvidenceResponseToEvidence(
-  r: { id: string; type: string; content: string | null; file_path: string | null; description: string | null },
-  submittedBy: EvidenceSubmittedBy
+  r: {
+    id: string
+    type: string
+    content: string | null
+    file_path: string | null
+    description: string | null
+  },
+  submittedBy: EvidenceSubmittedBy,
 ): Evidence {
   const content = r.content ?? (r.file_path || '')
   return {
@@ -207,7 +218,7 @@ export function useCaseStore() {
       if (isApiMode()) return
       saveToStorage(val)
     },
-    { deep: true }
+    { deep: true },
   )
 
   async function createCase(payload: {
@@ -284,7 +295,11 @@ export function useCaseStore() {
     }
   }
 
-  async function joinCase(caseId: string, inviteToken: string, _defendantId: string): Promise<boolean> {
+  async function joinCase(
+    caseId: string,
+    inviteToken: string,
+    _defendantId: string,
+  ): Promise<boolean> {
     if (isApiMode()) {
       const api = useCaseApi()
       await api.joinCase({ case_id: caseId, invite_token: inviteToken })
@@ -319,7 +334,7 @@ export function useCaseStore() {
         createdAt: detail.created_at,
         plaintiffId: detail.created_by,
         defendantId: detail.counterpart_id ?? undefined,
-        inviteToken: '',
+        inviteToken: detail.invite_token,
         plaintiffEvidence: [],
         defendantEvidence: [],
         plaintiffEvidenceComplete: false,
@@ -339,13 +354,15 @@ export function useCaseStore() {
     ])
     const plaintiffId = detail.created_by
     const defendantId = detail.counterpart_id ?? undefined
-    const mySubmittedBy: EvidenceSubmittedBy = detail.my_role === 'creator' ? 'plaintiff' : 'defendant'
-    const oppSubmittedBy: EvidenceSubmittedBy = detail.my_role === 'creator' ? 'defendant' : 'plaintiff'
-    const plaintiffEvidence = (detail.my_role === 'creator' ? myEvidence : counterpartEvidence).map((r) =>
-      mapEvidenceResponseToEvidence(r, 'plaintiff')
+    const mySubmittedBy: EvidenceSubmittedBy =
+      detail.my_role === 'creator' ? 'plaintiff' : 'defendant'
+    const oppSubmittedBy: EvidenceSubmittedBy =
+      detail.my_role === 'creator' ? 'defendant' : 'plaintiff'
+    const plaintiffEvidence = (detail.my_role === 'creator' ? myEvidence : counterpartEvidence).map(
+      (r) => mapEvidenceResponseToEvidence(r, 'plaintiff'),
     )
-    const defendantEvidence = (detail.my_role === 'creator' ? counterpartEvidence : myEvidence).map((r) =>
-      mapEvidenceResponseToEvidence(r, 'defendant')
+    const defendantEvidence = (detail.my_role === 'creator' ? counterpartEvidence : myEvidence).map(
+      (r) => mapEvidenceResponseToEvidence(r, 'defendant'),
     )
     const caseData: CaseData = {
       id: detail.id,
@@ -356,7 +373,7 @@ export function useCaseStore() {
       createdAt: detail.created_at,
       plaintiffId,
       defendantId,
-      inviteToken: '', // not returned by detail
+      inviteToken: detail.invite_token,
       plaintiffEvidence,
       defendantEvidence,
       plaintiffEvidenceComplete: false,
@@ -373,7 +390,7 @@ export function useCaseStore() {
   /** 초대 링크에서 내용증명 요약만 조회 (참여 전). 인증 없는 preview API 사용. */
   async function fetchCasePreviewFromApi(
     caseId: string,
-    inviteToken: string
+    inviteToken: string,
   ): Promise<CaseData | undefined> {
     if (!isApiMode()) return getCase(caseId)
     const api = useCaseApi()
@@ -410,7 +427,12 @@ export function useCaseStore() {
     if (!c) return
     if (isApiMode()) {
       const api = useCaseApi()
-      const form: { type: 'text' | 'chat' | 'photo'; content?: string; description?: string; file?: File } = {
+      const form: {
+        type: 'text' | 'chat' | 'photo'
+        content?: string
+        description?: string
+        file?: File
+      } = {
         type: evidence.type,
       }
       if (evidence.type === 'text') form.content = evidence.content
@@ -450,7 +472,10 @@ export function useCaseStore() {
     }
   }
 
-  async function setEvidenceComplete(caseId: string, submittedBy: EvidenceSubmittedBy): Promise<void> {
+  async function setEvidenceComplete(
+    caseId: string,
+    submittedBy: EvidenceSubmittedBy,
+  ): Promise<void> {
     const c = cases.value[caseId]
     if (!c) return
     if (isApiMode()) {
@@ -470,7 +495,12 @@ export function useCaseStore() {
     }
   }
 
-  function setReview(caseId: string, submittedBy: EvidenceSubmittedBy, evidenceId: string, review: EvidenceReview) {
+  function setReview(
+    caseId: string,
+    submittedBy: EvidenceSubmittedBy,
+    evidenceId: string,
+    review: EvidenceReview,
+  ) {
     const c = cases.value[caseId]
     if (!c) return
     if (submittedBy === 'plaintiff') {
