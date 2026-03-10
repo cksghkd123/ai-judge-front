@@ -1,7 +1,9 @@
 <template>
   <main class="min-h-screen flex flex-col items-center p-6 pb-12 bg-paper text-ink font-body">
     <template v-if="caseData && !myRole">
-      <section class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
+      <section
+        class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard"
+      >
         <p class="m-0 text-ink/80">이 사건에 참여한 당사자가 아니에요.</p>
         <NuxtLink
           to="/dashboard"
@@ -12,7 +14,9 @@
       </section>
     </template>
     <template v-else-if="caseData && myRole">
-      <section class="w-full max-w-lg flex flex-col gap-5 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
+      <section
+        class="w-full max-w-lg flex flex-col gap-5 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard"
+      >
         <h1 class="font-heading font-extrabold tracking-tight text-xl m-0">{{ caseData.title }}</h1>
         <p class="m-0 text-sm text-ink/80">
           <span class="font-doodle">상태</span> {{ statusLabel }}
@@ -21,7 +25,9 @@
 
         <!-- pending: 상대 참여 대기 (원고만) -->
         <div v-if="caseData.status === 'pending'" class="border-2 border-ink rounded-lg p-4">
-          <p class="m-0 text-ink/80">상대방이 참여할 때까지 기다리는 중이에요. 내용증명 전달용 링크를 보냈는지 확인해 주세요.</p>
+          <p class="m-0 text-ink/80">
+            상대방이 참여할 때까지 기다리는 중이에요. 내용증명 전달용 링크를 보냈는지 확인해 주세요.
+          </p>
           <NuxtLink
             :to="`/case/${caseId}/invite`"
             class="inline-block mt-2 border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-accent shadow-hard text-center no-underline transition duration-150 ease-out hover:-translate-y-1"
@@ -44,9 +50,16 @@
                   class="border-2 border-ink rounded-lg p-3 flex flex-col gap-1"
                 >
                   <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
-                  <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">{{ e.content }}</p>
+                  <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">
+                    {{ e.content }}
+                  </p>
                   <template v-else>
-                    <img v-if="e.content" :src="getEvidenceImageUrl(e.content)" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink">
+                    <img
+                      v-if="e.content"
+                      :src="getEvidenceImageUrl(e.content)"
+                      alt="첨부"
+                      class="max-w-full max-h-40 object-contain rounded border border-ink"
+                    />
                     <p v-if="e.description" class="m-0 text-sm text-ink/80">{{ e.description }}</p>
                   </template>
                 </li>
@@ -61,9 +74,16 @@
                   class="border-2 border-ink rounded-lg p-3 flex flex-col gap-1"
                 >
                   <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
-                  <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">{{ e.content }}</p>
+                  <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">
+                    {{ e.content }}
+                  </p>
                   <template v-else>
-                    <img v-if="e.content" :src="getEvidenceImageUrl(e.content)" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink">
+                    <img
+                      v-if="e.content"
+                      :src="getEvidenceImageUrl(e.content)"
+                      alt="첨부"
+                      class="max-w-full max-h-40 object-contain rounded border border-ink"
+                    />
                     <p v-if="e.description" class="m-0 text-sm text-ink/80">{{ e.description }}</p>
                   </template>
                   <button
@@ -134,7 +154,9 @@
             </template>
           </div>
           <div class="border-2 border-ink rounded-lg p-4">
-            <h2 class="font-ui font-semibold text-sm m-0">{{ myRole === 'plaintiff' ? '피고' : '원고' }} 제출 여부</h2>
+            <h2 class="font-ui font-semibold text-sm m-0">
+              {{ myRole === 'plaintiff' ? '피고' : '원고' }} 제출 여부
+            </h2>
             <p class="m-0 text-sm text-ink/80 mt-2">
               {{ otherEvidenceComplete ? '상대방 제출 완료' : '상대방 제출 대기 중' }}
             </p>
@@ -145,7 +167,9 @@
         <template v-if="caseData.status === 'reviewing'">
           <div class="border-2 border-ink rounded-lg p-4 flex flex-col gap-3">
             <h2 class="font-ui font-semibold text-sm m-0">상대방 증거 검토</h2>
-            <p class="m-0 text-sm text-ink/80">각 증거에 대해 인정(YES) 또는 불인정(NO, 반박 필수)을 선택해 주세요.</p>
+            <p class="m-0 text-sm text-ink/80">
+              각 증거에 대해 인정(YES) 또는 불인정(NO, 반박 필수)을 선택해 주세요.
+            </p>
             <ul class="list-none m-0 p-0 flex flex-col gap-3">
               <li
                 v-for="e in opponentEvidenceList"
@@ -153,18 +177,39 @@
                 class="border-2 border-ink rounded-lg p-3"
               >
                 <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
-                <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">{{ e.content }}</p>
+                <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">
+                  {{ e.content }}
+                </p>
                 <template v-else>
-                  <img v-if="e.content" :src="getEvidenceImageUrl(e.content)" alt="첨부" class="max-w-full max-h-40 object-contain rounded border border-ink mt-1">
-                  <p v-if="e.description" class="m-0 text-sm text-ink/80 mt-1">{{ e.description }}</p>
+                  <img
+                    v-if="e.content"
+                    :src="getEvidenceImageUrl(e.content)"
+                    alt="첨부"
+                    class="max-w-full max-h-40 object-contain rounded border border-ink mt-1"
+                  />
+                  <p v-if="e.description" class="m-0 text-sm text-ink/80 mt-1">
+                    {{ e.description }}
+                  </p>
                 </template>
                 <div class="mt-2 flex gap-2 items-start">
                   <label class="flex items-center gap-1 cursor-pointer">
-                    <input :checked="getReview(e.id).accepted" type="radio" :name="`rev-${e.id}`" :value="true" @change="setReviewAccepted(e.id, true)" />
+                    <input
+                      :checked="getReview(e.id).accepted"
+                      type="radio"
+                      :name="`rev-${e.id}`"
+                      :value="true"
+                      @change="setReviewAccepted(e.id, true)"
+                    />
                     <span class="text-sm">인정 (YES)</span>
                   </label>
                   <label class="flex items-center gap-1 cursor-pointer">
-                    <input :checked="!getReview(e.id).accepted" type="radio" :name="`rev-${e.id}`" :value="false" @change="setReviewAccepted(e.id, false)" />
+                    <input
+                      :checked="!getReview(e.id).accepted"
+                      type="radio"
+                      :name="`rev-${e.id}`"
+                      :value="false"
+                      @change="setReviewAccepted(e.id, false)"
+                    />
                     <span class="text-sm">불인정 (NO)</span>
                   </label>
                 </div>
@@ -230,7 +275,10 @@
         </NuxtLink>
       </section>
     </template>
-    <section v-else class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
+    <section
+      v-else
+      class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard"
+    >
       <p class="m-0 text-ink/80">해당 사건을 찾을 수 없어요.</p>
       <NuxtLink
         to="/dashboard"
@@ -262,10 +310,14 @@ const {
 const { user } = useAuth()
 const { getEvidenceImageUrl } = useCaseApi()
 
-await useAsyncData(`case-${caseId}`, async () => {
-  if (isApiMode()) return fetchCaseFromApi(caseId)
-  return null
-})
+await useAsyncData(
+  `case-${caseId}`,
+  async () => {
+    if (isApiMode()) return fetchCaseFromApi(caseId)
+    return null
+  },
+  { server: false },
+)
 
 const caseData = computed(() => getCase(caseId))
 
@@ -292,7 +344,9 @@ const statusLabel = computed(() => {
 
 const myEvidenceList = computed(() => {
   if (!caseData.value || !myRole.value) return []
-  return myRole.value === 'plaintiff' ? caseData.value.plaintiffEvidence : caseData.value.defendantEvidence
+  return myRole.value === 'plaintiff'
+    ? caseData.value.plaintiffEvidence
+    : caseData.value.defendantEvidence
 })
 
 const myEvidenceComplete = computed(() => {
@@ -311,7 +365,9 @@ const otherEvidenceComplete = computed(() => {
 
 const opponentEvidenceList = computed(() => {
   if (!caseData.value || !myRole.value) return []
-  return myRole.value === 'plaintiff' ? caseData.value.defendantEvidence : caseData.value.plaintiffEvidence
+  return myRole.value === 'plaintiff'
+    ? caseData.value.defendantEvidence
+    : caseData.value.plaintiffEvidence
 })
 
 const myReviewComplete = computed(() => {
@@ -323,7 +379,9 @@ const myReviewComplete = computed(() => {
 
 const myReviews = computed(() => {
   if (!caseData.value || !myRole.value) return {}
-  return myRole.value === 'plaintiff' ? caseData.value.plaintiffReviews : caseData.value.defendantReviews
+  return myRole.value === 'plaintiff'
+    ? caseData.value.plaintiffReviews
+    : caseData.value.defendantReviews
 })
 
 const reviews = ref<Record<string, { accepted: boolean; rebuttal?: string }>>({})
@@ -340,7 +398,7 @@ watch(
     }
     reviews.value = next
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 function evidenceTypeLabel(t: string): string {
@@ -373,7 +431,7 @@ async function addEvidence() {
     description: newEvidenceDescription.value.trim() || undefined,
     submittedBy: myRole.value as EvidenceSubmittedBy,
   }
-  const file = newEvidenceType.value !== 'text' ? newEvidenceFile.value ?? undefined : undefined
+  const file = newEvidenceType.value !== 'text' ? (newEvidenceFile.value ?? undefined) : undefined
   submitting.value = true
   try {
     await addEvidenceStore(caseId, evidence, file)

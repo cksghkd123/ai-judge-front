@@ -82,7 +82,9 @@ export function useCaseApi() {
   /** 요청 시점에 세션 조회해 Bearer 토큰 전달 (useAuth 세션보다 쿠키 기준이 안정적) */
   async function getAuthHeaders(): Promise<Record<string, string>> {
     if (!supabase) return {}
-    const { data: { session } } = await supabase.auth.getSession()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
     const token = session?.access_token
     if (!token) return {}
     return { Authorization: `Bearer ${token}` }
@@ -108,11 +110,11 @@ export function useCaseApi() {
   }
 
   async function createCase(body: CreateCaseRequest): Promise<CreateCaseResponse> {
-    return request<CreateCaseResponse>('POST', `${PREFIX}/cases`, { body })
+    return request<CreateCaseResponse>('POST', `${PREFIX}/case`, { body })
   }
 
   async function joinCase(body: JoinCaseRequest): Promise<void> {
-    return request<void>('POST', `${PREFIX}/cases/join`, { body })
+    return request<void>('POST', `${PREFIX}/case/join`, { body })
   }
 
   async function listCases(): Promise<CaseListItem[]> {
@@ -120,12 +122,12 @@ export function useCaseApi() {
   }
 
   async function getCaseDetail(caseId: string): Promise<CaseDetailResponse> {
-    return request<CaseDetailResponse>('GET', `${PREFIX}/cases/${caseId}`)
+    return request<CaseDetailResponse>('GET', `${PREFIX}/case/${caseId}`)
   }
 
   /** 참여 전 미리보기. 인증 없이 호출 (pending 사건만 조회 가능) */
   async function getCasePreview(caseId: string): Promise<CasePreviewResponse> {
-    const url = `${baseUrl}${PREFIX}/cases/preview/${caseId}`
+    const url = `${baseUrl}${PREFIX}/case/preview/${caseId}`
     return $fetch<CasePreviewResponse>(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
@@ -141,7 +143,7 @@ export function useCaseApi() {
       file?: File
     },
   ): Promise<EvidenceResponse> {
-    const url = `${baseUrl}${PREFIX}/cases/${caseId}/evidence`
+    const url = `${baseUrl}${PREFIX}/case/${caseId}/evidence`
     const authHeaders = await getAuthHeaders()
     const headers: Record<string, string> = {
       ...authHeaders,
@@ -160,20 +162,15 @@ export function useCaseApi() {
   }
 
   async function completeEvidence(caseId: string): Promise<void> {
-    return request<void>('POST', `${PREFIX}/cases/${caseId}/evidence/complete`)
+    return request<void>('POST', `${PREFIX}/case/${caseId}/evidence/complete`)
   }
 
   async function listMyEvidence(caseId: string): Promise<EvidenceResponse[]> {
-    return request<EvidenceResponse[]>('GET', `${PREFIX}/cases/${caseId}/evidence`)
+    return request<EvidenceResponse[]>('GET', `${PREFIX}/case/${caseId}/my-evidences`)
   }
 
-  /** 상대방 증거 목록. 백엔드에 엔드포인트 없으면 404 → [] 반환 */
-  async function listOpponentEvidence(caseId: string): Promise<EvidenceResponse[]> {
-    try {
-      return await request<EvidenceResponse[]>('GET', `${PREFIX}/cases/${caseId}/evidence/opponent`)
-    } catch {
-      return []
-    }
+  async function listCounterpartEvidence(caseId: string): Promise<EvidenceResponse[]> {
+    return request<EvidenceResponse[]>('GET', `${PREFIX}/case/${caseId}/counterpart-evidences`)
   }
 
   /** 증거 이미지 URL. file_path가 상대 경로일 때 Supabase storage public URL로 변환 */
@@ -197,7 +194,7 @@ export function useCaseApi() {
     addEvidence,
     completeEvidence,
     listMyEvidence,
-    listOpponentEvidence,
+    listCounterpartEvidence,
     getEvidenceImageUrl,
   }
 }

@@ -306,19 +306,45 @@ export function useCaseStore() {
   async function fetchCaseFromApi(caseId: string): Promise<CaseData | undefined> {
     if (!isApiMode()) return getCase(caseId)
     const api = useCaseApi()
-    const [detail, myEvidence, opponentEvidence] = await Promise.all([
-      api.getCaseDetail(caseId),
+    const detail = await api.getCaseDetail(caseId)
+
+    // pending이면 counterpart_evidences가 400이라서 증거 API 호출 생략
+    if (detail.status === 'pending') {
+      const caseData: CaseData = {
+        id: detail.id,
+        title: detail.title,
+        complaintSummary: detail.description,
+        issue: detail.issue,
+        status: detail.status as CaseStatus,
+        createdAt: detail.created_at,
+        plaintiffId: detail.created_by,
+        defendantId: detail.counterpart_id ?? undefined,
+        inviteToken: '',
+        plaintiffEvidence: [],
+        defendantEvidence: [],
+        plaintiffEvidenceComplete: false,
+        defendantEvidenceComplete: false,
+        plaintiffReviews: {},
+        defendantReviews: {},
+        plaintiffReviewComplete: false,
+        defendantReviewComplete: false,
+      }
+      cases.value = { ...cases.value, [caseId]: caseData }
+      return caseData
+    }
+
+    const [myEvidence, counterpartEvidence] = await Promise.all([
       api.listMyEvidence(caseId),
-      api.listOpponentEvidence(caseId),
+      api.listCounterpartEvidence(caseId),
     ])
     const plaintiffId = detail.created_by
     const defendantId = detail.counterpart_id ?? undefined
     const mySubmittedBy: EvidenceSubmittedBy = detail.my_role === 'creator' ? 'plaintiff' : 'defendant'
     const oppSubmittedBy: EvidenceSubmittedBy = detail.my_role === 'creator' ? 'defendant' : 'plaintiff'
-    const plaintiffEvidence = (detail.my_role === 'creator' ? myEvidence : opponentEvidence).map((r) =>
+    const plaintiffEvidence = (detail.my_role === 'creator' ? myEvidence : counterpartEvidence).map((r) =>
       mapEvidenceResponseToEvidence(r, 'plaintiff')
     )
-    const defendantEvidence = (detail.my_role === 'creator' ? opponentEvidence : myEvidence).map((r) =>
+    const defendantEvidence = (detail.my_role === 'creator' ? counterpartEvidence : myEvidence).map((r) =>
       mapEvidenceResponseToEvidence(r, 'defendant')
     )
     const caseData: CaseData = {
