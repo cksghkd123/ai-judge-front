@@ -45,6 +45,16 @@ export interface CaseDetailResponse {
   created_at: string
 }
 
+/** 사건 참여 전 미리보기용 (인증 불필요). GET /cases/preview/{case_id} */
+export interface CasePreviewResponse {
+  id: string
+  title: string
+  description: string
+  issue: string
+  status: string
+  created_at: string
+}
+
 export interface EvidenceResponse {
   id: string
   case_id: string
@@ -113,6 +123,15 @@ export function useCaseApi() {
     return request<CaseDetailResponse>('GET', `${PREFIX}/cases/${caseId}`)
   }
 
+  /** 참여 전 미리보기. 인증 없이 호출 (pending 사건만 조회 가능) */
+  async function getCasePreview(caseId: string): Promise<CasePreviewResponse> {
+    const url = `${baseUrl}${PREFIX}/cases/preview/${caseId}`
+    return $fetch<CasePreviewResponse>(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   async function addEvidence(
     caseId: string,
     form: {
@@ -174,6 +193,7 @@ export function useCaseApi() {
     joinCase,
     listCases,
     getCaseDetail,
+    getCasePreview,
     addEvidence,
     completeEvidence,
     listMyEvidence,

@@ -90,6 +90,12 @@ const signIn = async (provider: Provider) => {
 onMounted(async () => {
   isClient.value = true
 
+  const redirectParam = route.query.redirect
+  const redirectStr = Array.isArray(redirectParam) ? redirectParam[0] : redirectParam
+  if (redirectStr && typeof window !== 'undefined') {
+    sessionStorage.setItem('login_redirect', redirectStr)
+  }
+
   const code = route.query.code as string | undefined
   const errorFromCallback = route.query.error as string | undefined
 
@@ -97,13 +103,15 @@ onMounted(async () => {
     errorMessage.value =
       decodeURIComponent(errorFromCallback) ||
       '로그인 처리에 실패했어요. 잠시 후 다시 시도해주세요.'
-    await router.replace({ path: '/sign-in', query: {} })
+    const query = redirectStr ? { redirect: redirectStr } : {}
+    await router.replace({ path: '/sign-in', query })
     return
   }
 
   if (code) {
-    // 서버에서 code ↔ session 교환 (쿠키에 있는 code_verifier 사용). 완료 시 /dashboard로 리다이렉트됨.
-    window.location.href = `/api/auth/callback?code=${encodeURIComponent(code)}`
+    const redirect = typeof window !== 'undefined' ? sessionStorage.getItem('login_redirect') || '' : ''
+    const redirectQ = redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''
+    window.location.href = `/api/auth/callback?code=${encodeURIComponent(code)}${redirectQ}`
     return
   }
 
@@ -114,7 +122,9 @@ onMounted(async () => {
 
 watch([isReady, session], ([ready, sess]) => {
   if (ready && sess && !route.query.code) {
-    router.replace('/dashboard')
+    const redirect = (route.query.redirect as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('login_redirect') : null)
+    if (typeof window !== 'undefined') sessionStorage.removeItem('login_redirect')
+    router.replace(redirect && redirect.startsWith('/') ? redirect : '/dashboard')
   }
 })
 </script>
