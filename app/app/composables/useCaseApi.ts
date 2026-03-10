@@ -64,16 +64,19 @@ function getBaseUrl(): string {
   return base.replace(/\/$/, '')
 }
 
-function getAuthHeaders(): Record<string, string> {
-  const { session } = useAuth()
-  const token = session.value?.access_token
-  if (!token) return {}
-  return { Authorization: `Bearer ${token}` }
-}
-
 export function useCaseApi() {
   const baseUrl = getBaseUrl()
   const hasApi = computed(() => Boolean(baseUrl))
+  const supabase = useNuxtApp().$supabase
+
+  /** 요청 시점에 세션 조회해 Bearer 토큰 전달 (useAuth 세션보다 쿠키 기준이 안정적) */
+  async function getAuthHeaders(): Promise<Record<string, string>> {
+    if (!supabase) return {}
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) return {}
+    return { Authorization: `Bearer ${token}` }
+  }
 
   async function request<T>(
     method: string,
@@ -81,8 +84,9 @@ export function useCaseApi() {
     opts: { body?: object; query?: Record<string, string> } = {},
   ): Promise<T> {
     const url = `${baseUrl}${path}`
+    const authHeaders = await getAuthHeaders()
     const headers: Record<string, string> = {
-      ...getAuthHeaders(),
+      ...authHeaders,
       'Content-Type': 'application/json',
     }
     return $fetch<T>(url, {
@@ -119,8 +123,9 @@ export function useCaseApi() {
     },
   ): Promise<EvidenceResponse> {
     const url = `${baseUrl}${PREFIX}/cases/${caseId}/evidence`
+    const authHeaders = await getAuthHeaders()
     const headers: Record<string, string> = {
-      ...getAuthHeaders(),
+      ...authHeaders,
     }
     const body = new FormData()
     body.append('type', form.type)
