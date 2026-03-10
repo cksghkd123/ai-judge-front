@@ -12,8 +12,8 @@ export type EvidenceSubmittedBy = 'plaintiff' | 'defendant'
 export interface Evidence {
   id: string
   type: EvidenceType
-  content: string
-  description?: string
+  content: string | null
+  file_path?: string | null
   submittedBy: EvidenceSubmittedBy
 }
 
@@ -186,16 +186,14 @@ function mapEvidenceResponseToEvidence(
     type: string
     content: string | null
     file_path: string | null
-    description: string | null
   },
   submittedBy: EvidenceSubmittedBy,
 ): Evidence {
-  const content = r.content ?? (r.file_path || '')
   return {
     id: r.id,
     type: r.type as EvidenceType,
-    content,
-    description: r.description ?? undefined,
+    content: r.content ?? null,
+    file_path: r.file_path ?? undefined,
     submittedBy,
   }
 }
@@ -430,13 +428,12 @@ export function useCaseStore() {
       const form: {
         type: 'text' | 'chat' | 'photo'
         content?: string
-        description?: string
         file?: File
       } = {
         type: evidence.type,
       }
-      if (evidence.type === 'text') form.content = evidence.content
-      else form.description = evidence.description
+      if (evidence.type === 'text') form.content = evidence.content ?? undefined
+      else form.content = evidence.content ?? undefined
       if (file) form.file = file
       const res = await api.addEvidence(caseId, form)
       const mapped = mapEvidenceResponseToEvidence(res, evidence.submittedBy)

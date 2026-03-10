@@ -63,7 +63,6 @@ export interface EvidenceResponse {
   type: 'text' | 'chat' | 'photo'
   content: string | null
   file_path: string | null
-  description: string | null
   created_at: string
 }
 
@@ -140,7 +139,6 @@ export function useCaseApi() {
     form: {
       type: 'text' | 'chat' | 'photo'
       content?: string
-      description?: string
       file?: File
     },
   ): Promise<EvidenceResponse> {
@@ -152,7 +150,6 @@ export function useCaseApi() {
     const body = new FormData()
     body.append('type', form.type)
     if (form.content != null) body.append('content', form.content)
-    if (form.description != null) body.append('description', form.description)
     if (form.file) body.append('file', form.file)
 
     return $fetch<EvidenceResponse>(url, {

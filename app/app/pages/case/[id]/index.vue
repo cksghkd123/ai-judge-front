@@ -55,12 +55,12 @@
                   </p>
                   <template v-else>
                     <img
-                      v-if="e.content"
-                      :src="getEvidenceImageUrl(e.content)"
+                      v-if="e.file_path"
+                      :src="getEvidenceImageUrl(e.file_path)"
                       alt="첨부"
                       class="max-w-full max-h-40 object-contain rounded border border-ink"
                     />
-                    <p v-if="e.description" class="m-0 text-sm text-ink/80">{{ e.description }}</p>
+                    <p v-if="e.content" class="m-0 text-sm text-ink/80">{{ e.content }}</p>
                   </template>
                 </li>
               </ul>
@@ -79,12 +79,12 @@
                   </p>
                   <template v-else>
                     <img
-                      v-if="e.content"
-                      :src="getEvidenceImageUrl(e.content)"
+                      v-if="e.file_path"
+                      :src="getEvidenceImageUrl(e.file_path)"
                       alt="첨부"
                       class="max-w-full max-h-40 object-contain rounded border border-ink"
                     />
-                    <p v-if="e.description" class="m-0 text-sm text-ink/80">{{ e.description }}</p>
+                    <p v-if="e.content" class="m-0 text-sm text-ink/80">{{ e.content }}</p>
                   </template>
                   <button
                     type="button"
@@ -182,13 +182,13 @@
                 </p>
                 <template v-else>
                   <img
-                    v-if="e.content"
-                    :src="getEvidenceImageUrl(e.content)"
+                    v-if="e.file_path"
+                    :src="getEvidenceImageUrl(e.file_path)"
                     alt="첨부"
                     class="max-w-full max-h-40 object-contain rounded border border-ink mt-1"
                   />
-                  <p v-if="e.description" class="m-0 text-sm text-ink/80 mt-1">
-                    {{ e.description }}
+                  <p v-if="e.content" class="m-0 text-sm text-ink/80 mt-1">
+                    {{ e.content }}
                   </p>
                 </template>
                 <div class="mt-2 flex gap-2 items-start">
@@ -427,8 +427,11 @@ async function addEvidence() {
   const evidence: Evidence = {
     id: crypto.randomUUID(),
     type: newEvidenceType.value,
-    content: newEvidenceContent.value.trim() || '',
-    description: newEvidenceDescription.value.trim() || undefined,
+    content:
+      newEvidenceType.value === 'text'
+        ? newEvidenceContent.value.trim() || null
+        : newEvidenceDescription.value.trim() || null,
+    file_path: undefined,
     submittedBy: myRole.value as EvidenceSubmittedBy,
   }
   const file = newEvidenceType.value !== 'text' ? (newEvidenceFile.value ?? undefined) : undefined
