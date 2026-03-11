@@ -158,7 +158,7 @@
               {{ myRole === 'plaintiff' ? '피고' : '원고' }} 제출 여부
             </h2>
             <p class="m-0 text-sm text-ink/80 mt-2">
-              {{ otherEvidenceComplete ? '상대방 제출 완료' : '상대방 제출 대기 중' }}
+              {{ otherEvidenceComplete ? '상대방 제출 완료' : (myEvidenceComplete ? '상대를 기다리고 있습니다.' : '상대방 제출 대기 중') }}
             </p>
           </div>
         </template>

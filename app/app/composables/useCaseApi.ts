@@ -44,6 +44,8 @@ export interface CaseDetailResponse {
   my_role: 'creator' | 'counterparty'
   created_at: string
   invite_token: string
+  creator_evidence_complete: boolean
+  counterparty_evidence_complete: boolean
 }
 
 /** 사건 참여 전 미리보기용 (인증 불필요). GET /cases/preview/{case_id} */
