@@ -22,7 +22,7 @@ const token = route.query.token as string | undefined
 
 onMounted(() => {
   if (token) {
-    router.replace({ path: `/cases/${caseId}`, query: { token } })
+    router.replace({ path: `/case/${caseId}/invited`, query: { token } })
   }
 })
 </script>

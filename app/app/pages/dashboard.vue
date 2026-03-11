@@ -12,7 +12,7 @@
           <NuxtLink
             v-for="c in ongoingCases"
             :key="c.id"
-            :to="`/case/${c.id}`"
+            :to="`/case/${c.id}/${c.status}`"
             class="block border-2 border-ink rounded-lg p-4 no-underline text-ink bg-paper transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/5"
           >
             <p class="font-ui font-semibold m-0 text-ink line-clamp-2">{{ c.title }}</p>

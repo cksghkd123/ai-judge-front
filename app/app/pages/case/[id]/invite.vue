@@ -55,9 +55,9 @@ const caseData = computed(() => getCase(caseId))
 const inviteUrl = computed(() => {
   if (!caseData.value?.inviteToken) return ''
   if (import.meta.client && typeof window !== 'undefined') {
-    return `${window.location.origin}/cases/${caseId}?token=${encodeURIComponent(caseData.value.inviteToken)}`
+    return `${window.location.origin}/case/${caseId}/invited?token=${encodeURIComponent(caseData.value.inviteToken)}`
   }
-  return `/cases/${caseId}?token=${encodeURIComponent(caseData.value.inviteToken)}`
+  return `/case/${caseId}/invited?token=${encodeURIComponent(caseData.value.inviteToken)}`
 })
 
 const copied = ref(false)

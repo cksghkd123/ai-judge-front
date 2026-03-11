@@ -6,7 +6,7 @@ import { getHeader, getQuery, appendResponseHeader, sendRedirect, createError } 
  * OAuth 콜백: 서버에서 code ↔ session 교환 (PKCE code_verifier는 요청 쿠키에 있음).
  * 리다이렉트 후 같은 도메인으로 돌아오므로 쿠키가 전달되고, 교환 후 세션 쿠키를 설정해 /dashboard로 보냄.
  */
-/** 로그인 후 돌아갈 경로. 같은 오리진 경로만 허용 (예: /cases/xxx?token=yyy) */
+/** 로그인 후 돌아갈 경로. 같은 오리진 경로만 허용 (예: /case/xxx/invited?token=yyy) */
 function getAllowedRedirect(redirect: string | undefined): string | null {
   if (!redirect || typeof redirect !== 'string') return null
   const decoded = decodeURIComponent(redirect)
