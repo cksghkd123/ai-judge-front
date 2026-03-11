@@ -112,7 +112,7 @@ function caseStatusLabel(status: string): string {
   const map: Record<string, string> = {
     pending: '상대 참여 대기',
     active: '증거 제출 중',
-    reviewing: '상대 증거 검토 중',
+    rebutting: '반박 작성 중',
     judging: '판결 중',
     completed: '판결 완료',
   }

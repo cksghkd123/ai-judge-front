@@ -1,4 +1,4 @@
-export type CaseStatus = 'pending' | 'active' | 'reviewing' | 'judging' | 'completed'
+export type CaseStatus = 'pending' | 'active' | 'rebutting' | 'judging' | 'completed'
 
 export interface FaultRatio {
   plaintiff: number
@@ -17,7 +17,7 @@ export interface Evidence {
   submittedBy: EvidenceSubmittedBy
 }
 
-export interface EvidenceReview {
+export interface EvidenceRebuttal {
   accepted: boolean
   rebuttal?: string
 }
@@ -37,10 +37,10 @@ export interface CaseData {
   defendantEvidence: Evidence[]
   plaintiffEvidenceComplete: boolean
   defendantEvidenceComplete: boolean
-  plaintiffReviews: Record<string, EvidenceReview>
-  defendantReviews: Record<string, EvidenceReview>
-  plaintiffReviewComplete: boolean
-  defendantReviewComplete: boolean
+  plaintiffRebuttals: Record<string, EvidenceRebuttal>
+  defendantRebuttals: Record<string, EvidenceRebuttal>
+  plaintiffRebuttalComplete: boolean
+  defendantRebuttalComplete: boolean
   verdictText?: string
   faultRatio?: FaultRatio
 }
@@ -54,7 +54,7 @@ function migrateFromLegacy(data: Record<string, unknown>): Record<string, CaseDa
     matched: 'active',
     plaintiff_submitted: 'active',
     defendant_submitted: 'active',
-    both_submitted: 'reviewing',
+    both_submitted: 'rebutting',
     judging: 'judging',
     verdict: 'completed',
   }
@@ -99,10 +99,10 @@ function migrateFromLegacy(data: Record<string, unknown>): Record<string, CaseDa
         (c.plaintiffEvidenceComplete as boolean) ?? plaintiffEvidence.length > 0,
       defendantEvidenceComplete:
         (c.defendantEvidenceComplete as boolean) ?? defendantEvidence.length > 0,
-      plaintiffReviews: (c.plaintiffReviews as Record<string, EvidenceReview>) ?? {},
-      defendantReviews: (c.defendantReviews as Record<string, EvidenceReview>) ?? {},
-      plaintiffReviewComplete: (c.plaintiffReviewComplete as boolean) ?? false,
-      defendantReviewComplete: (c.defendantReviewComplete as boolean) ?? false,
+      plaintiffRebuttals: (c.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ?? (c.plaintiffReviews as Record<string, EvidenceRebuttal>) ?? {},
+      defendantRebuttals: (c.defendantRebuttals as Record<string, EvidenceRebuttal>) ?? (c.defendantReviews as Record<string, EvidenceRebuttal>) ?? {},
+      plaintiffRebuttalComplete: (c.plaintiffRebuttalComplete as boolean) ?? (c.plaintiffReviewComplete as boolean) ?? false,
+      defendantRebuttalComplete: (c.defendantRebuttalComplete as boolean) ?? (c.defendantReviewComplete as boolean) ?? false,
       verdictText: c.verdictText as string | undefined,
       faultRatio: c.faultRatio as FaultRatio | undefined,
     }
@@ -140,10 +140,10 @@ function loadFromStorage(): Record<string, CaseData> {
                 : [],
               plaintiffEvidenceComplete: (item.plaintiffEvidenceComplete as boolean) ?? false,
               defendantEvidenceComplete: (item.defendantEvidenceComplete as boolean) ?? false,
-              plaintiffReviews: (item.plaintiffReviews as Record<string, EvidenceReview>) ?? {},
-              defendantReviews: (item.defendantReviews as Record<string, EvidenceReview>) ?? {},
-              plaintiffReviewComplete: (item.plaintiffReviewComplete as boolean) ?? false,
-              defendantReviewComplete: (item.defendantReviewComplete as boolean) ?? false,
+              plaintiffRebuttals: (item.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ?? (item.plaintiffReviews as Record<string, EvidenceRebuttal>) ?? {},
+              defendantRebuttals: (item.defendantRebuttals as Record<string, EvidenceRebuttal>) ?? (item.defendantReviews as Record<string, EvidenceRebuttal>) ?? {},
+              plaintiffRebuttalComplete: (item.plaintiffRebuttalComplete as boolean) ?? (item.plaintiffReviewComplete as boolean) ?? false,
+              defendantRebuttalComplete: (item.defendantRebuttalComplete as boolean) ?? (item.defendantReviewComplete as boolean) ?? false,
             } as CaseData
           }
           return normalized
@@ -246,10 +246,10 @@ export function useCaseStore() {
         defendantEvidence: [],
         plaintiffEvidenceComplete: false,
         defendantEvidenceComplete: false,
-        plaintiffReviews: {},
-        defendantReviews: {},
-        plaintiffReviewComplete: false,
-        defendantReviewComplete: false,
+        plaintiffRebuttals: {},
+        defendantRebuttals: {},
+        plaintiffRebuttalComplete: false,
+        defendantRebuttalComplete: false,
       }
       cases.value = { ...cases.value, [res.id]: caseData }
       return caseData
@@ -271,10 +271,10 @@ export function useCaseStore() {
       defendantEvidence: [],
       plaintiffEvidenceComplete: false,
       defendantEvidenceComplete: false,
-      plaintiffReviews: {},
-      defendantReviews: {},
-      plaintiffReviewComplete: false,
-      defendantReviewComplete: false,
+      plaintiffRebuttals: {},
+      defendantRebuttals: {},
+      plaintiffRebuttalComplete: false,
+      defendantRebuttalComplete: false,
     }
     cases.value = { ...cases.value, [id]: caseData }
     return caseData
@@ -337,10 +337,10 @@ export function useCaseStore() {
         defendantEvidence: [],
         plaintiffEvidenceComplete: false,
         defendantEvidenceComplete: false,
-        plaintiffReviews: {},
-        defendantReviews: {},
-        plaintiffReviewComplete: false,
-        defendantReviewComplete: false,
+        plaintiffRebuttals: {},
+        defendantRebuttals: {},
+        plaintiffRebuttalComplete: false,
+        defendantRebuttalComplete: false,
       }
       cases.value = { ...cases.value, [caseId]: caseData }
       return caseData
@@ -376,10 +376,10 @@ export function useCaseStore() {
       defendantEvidence,
       plaintiffEvidenceComplete: detail.creator_evidence_complete,
       defendantEvidenceComplete: detail.counterparty_evidence_complete,
-      plaintiffReviews: {},
-      defendantReviews: {},
-      plaintiffReviewComplete: false,
-      defendantReviewComplete: false,
+      plaintiffRebuttals: {},
+      defendantRebuttals: {},
+      plaintiffRebuttalComplete: false,
+      defendantRebuttalComplete: false,
     }
     cases.value = { ...cases.value, [caseId]: caseData }
     return caseData
@@ -408,10 +408,10 @@ export function useCaseStore() {
         defendantEvidence: [],
         plaintiffEvidenceComplete: false,
         defendantEvidenceComplete: false,
-        plaintiffReviews: {},
-        defendantReviews: {},
-        plaintiffReviewComplete: false,
-        defendantReviewComplete: false,
+        plaintiffRebuttals: {},
+        defendantRebuttals: {},
+        plaintiffRebuttalComplete: false,
+        defendantRebuttalComplete: false,
       }
       cases.value = { ...cases.value, [caseId]: caseData }
       return caseData
@@ -488,39 +488,39 @@ export function useCaseStore() {
     }
     const next = cases.value[caseId]
     if (next?.plaintiffEvidenceComplete && next?.defendantEvidenceComplete) {
-      updateCase(caseId, { status: 'reviewing' })
+      updateCase(caseId, { status: 'rebutting' })
     }
   }
 
-  function setReview(
+  function setRebuttal(
     caseId: string,
     submittedBy: EvidenceSubmittedBy,
     evidenceId: string,
-    review: EvidenceReview,
+    rebuttal: EvidenceRebuttal,
   ) {
     const c = cases.value[caseId]
     if (!c) return
     if (submittedBy === 'plaintiff') {
       updateCase(caseId, {
-        plaintiffReviews: { ...c.plaintiffReviews, [evidenceId]: review },
+        plaintiffRebuttals: { ...c.plaintiffRebuttals, [evidenceId]: rebuttal },
       })
     } else {
       updateCase(caseId, {
-        defendantReviews: { ...c.defendantReviews, [evidenceId]: review },
+        defendantRebuttals: { ...c.defendantRebuttals, [evidenceId]: rebuttal },
       })
     }
   }
 
-  function setReviewComplete(caseId: string, submittedBy: EvidenceSubmittedBy) {
+  function setRebuttalComplete(caseId: string, submittedBy: EvidenceSubmittedBy) {
     const c = cases.value[caseId]
     if (!c) return
     if (submittedBy === 'plaintiff') {
-      updateCase(caseId, { plaintiffReviewComplete: true })
+      updateCase(caseId, { plaintiffRebuttalComplete: true })
     } else {
-      updateCase(caseId, { defendantReviewComplete: true })
+      updateCase(caseId, { defendantRebuttalComplete: true })
     }
     const next = cases.value[caseId]
-    if (next?.plaintiffReviewComplete && next?.defendantReviewComplete) {
+    if (next?.plaintiffRebuttalComplete && next?.defendantRebuttalComplete) {
       updateCase(caseId, { status: 'judging' })
     }
   }
@@ -535,8 +535,8 @@ export function useCaseStore() {
     addEvidence,
     removeEvidence,
     setEvidenceComplete,
-    setReview,
-    setReviewComplete,
+    setRebuttal,
+    setRebuttalComplete,
     isApiMode,
     fetchCasesFromApi,
     fetchCaseFromApi,

@@ -163,10 +163,10 @@
           </div>
         </template>
 
-        <!-- reviewing: 상대 증거 검토 YES/NO + 반박 -->
-        <template v-if="caseData.status === 'reviewing'">
+        <!-- rebutting: 상대 증거 반박 YES/NO + 반박 -->
+        <template v-if="caseData.status === 'rebutting'">
           <div class="border-2 border-ink rounded-lg p-4 flex flex-col gap-3">
-            <h2 class="font-ui font-semibold text-sm m-0">상대방 증거 검토</h2>
+            <h2 class="font-ui font-semibold text-sm m-0">상대방 증거 반박</h2>
             <p class="m-0 text-sm text-ink/80">
               각 증거에 대해 인정(YES) 또는 불인정(NO, 반박 필수)을 선택해 주세요.
             </p>
@@ -194,49 +194,49 @@
                 <div class="mt-2 flex gap-2 items-start">
                   <label class="flex items-center gap-1 cursor-pointer">
                     <input
-                      :checked="getReview(e.id).accepted"
+                      :checked="getRebuttal(e.id).accepted"
                       type="radio"
                       :name="`rev-${e.id}`"
                       :value="true"
-                      @change="setReviewAccepted(e.id, true)"
+                      @change="setRebuttalAccepted(e.id, true)"
                     />
                     <span class="text-sm">인정 (YES)</span>
                   </label>
                   <label class="flex items-center gap-1 cursor-pointer">
                     <input
-                      :checked="!getReview(e.id).accepted"
+                      :checked="!getRebuttal(e.id).accepted"
                       type="radio"
                       :name="`rev-${e.id}`"
                       :value="false"
-                      @change="setReviewAccepted(e.id, false)"
+                      @change="setRebuttalAccepted(e.id, false)"
                     />
                     <span class="text-sm">불인정 (NO)</span>
                   </label>
                 </div>
-                <div v-if="!getReview(e.id).accepted" class="mt-2">
+                <div v-if="!getRebuttal(e.id).accepted" class="mt-2">
                   <label class="font-ui text-xs font-semibold">반박 내용 (필수)</label>
                   <textarea
-                    :value="getReview(e.id).rebuttal"
+                    :value="getRebuttal(e.id).rebuttal"
                     rows="2"
                     class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 outline-none resize-y mt-1"
                     placeholder="불인정 사유를 적어 주세요."
-                    @input="setReviewRebuttal(e.id, ($event.target as HTMLTextAreaElement).value)"
+                    @input="setRebuttalText(e.id, ($event.target as HTMLTextAreaElement).value)"
                   />
                 </div>
               </li>
             </ul>
-            <template v-if="!myReviewComplete">
+            <template v-if="!myRebuttalComplete">
               <button
                 type="button"
                 class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 disabled:opacity-60 disabled:transform-none w-fit"
-                :disabled="!canSubmitReview || submitting"
-                @click="submitReview"
+                :disabled="!canSubmitRebuttal || submitting"
+                @click="submitRebuttal"
               >
-                {{ submitting ? '처리 중...' : '검토 제출' }}
+                {{ submitting ? '처리 중...' : '반박 제출' }}
               </button>
             </template>
             <template v-else>
-              <p class="m-0 text-accent font-doodle text-sm">검토 제출 완료</p>
+              <p class="m-0 text-accent font-doodle text-sm">반박 제출 완료</p>
             </template>
           </div>
         </template>
@@ -302,8 +302,8 @@ const {
   addEvidence: addEvidenceStore,
   removeEvidence: removeEvidenceStore,
   setEvidenceComplete,
-  setReview,
-  setReviewComplete,
+  setRebuttal,
+  setRebuttalComplete,
   isApiMode,
   fetchCaseFromApi,
 } = useCaseStore()
@@ -335,7 +335,7 @@ const statusLabel = computed(() => {
   const map: Record<string, string> = {
     pending: '상대 참여 대기',
     active: '증거 제출 중',
-    reviewing: '상대 증거 검토 중',
+    rebutting: '반박 작성 중',
     judging: '판결 중',
     completed: '판결 완료',
   }
@@ -370,33 +370,33 @@ const opponentEvidenceList = computed(() => {
     : caseData.value.plaintiffEvidence
 })
 
-const myReviewComplete = computed(() => {
+const myRebuttalComplete = computed(() => {
   if (!caseData.value || !myRole.value) return false
   return myRole.value === 'plaintiff'
-    ? caseData.value.plaintiffReviewComplete
-    : caseData.value.defendantReviewComplete
+    ? caseData.value.plaintiffRebuttalComplete
+    : caseData.value.defendantRebuttalComplete
 })
 
-const myReviews = computed(() => {
+const myRebuttals = computed(() => {
   if (!caseData.value || !myRole.value) return {}
   return myRole.value === 'plaintiff'
-    ? caseData.value.plaintiffReviews
-    : caseData.value.defendantReviews
+    ? caseData.value.plaintiffRebuttals
+    : caseData.value.defendantRebuttals
 })
 
-const reviews = ref<Record<string, { accepted: boolean; rebuttal?: string }>>({})
+const rebuttals = ref<Record<string, { accepted: boolean; rebuttal?: string }>>({})
 
 watch(
   () => [caseData.value?.id, opponentEvidenceList.value],
   () => {
     const next: Record<string, { accepted: boolean; rebuttal?: string }> = {}
     for (const e of opponentEvidenceList.value) {
-      const existing = myReviews.value[e.id]
+      const existing = myRebuttals.value[e.id]
       next[e.id] = existing
         ? { accepted: existing.accepted, rebuttal: existing.rebuttal ?? '' }
         : { accepted: true, rebuttal: '' }
     }
-    reviews.value = next
+    rebuttals.value = next
   },
   { immediate: true },
 )
@@ -475,43 +475,43 @@ async function submitEvidenceComplete() {
   }
 }
 
-function getReview(evidenceId: string): { accepted: boolean; rebuttal?: string } {
-  return reviews.value[evidenceId] ?? { accepted: true, rebuttal: '' }
+function getRebuttal(evidenceId: string): { accepted: boolean; rebuttal?: string } {
+  return rebuttals.value[evidenceId] ?? { accepted: true, rebuttal: '' }
 }
 
-function setReviewAccepted(evidenceId: string, accepted: boolean) {
-  if (!reviews.value[evidenceId]) reviews.value[evidenceId] = { accepted: true, rebuttal: '' }
-  reviews.value[evidenceId].accepted = accepted
+function setRebuttalAccepted(evidenceId: string, accepted: boolean) {
+  if (!rebuttals.value[evidenceId]) rebuttals.value[evidenceId] = { accepted: true, rebuttal: '' }
+  rebuttals.value[evidenceId].accepted = accepted
 }
 
-function setReviewRebuttal(evidenceId: string, rebuttal: string) {
-  if (!reviews.value[evidenceId]) reviews.value[evidenceId] = { accepted: false, rebuttal: '' }
-  reviews.value[evidenceId].rebuttal = rebuttal
+function setRebuttalText(evidenceId: string, rebuttal: string) {
+  if (!rebuttals.value[evidenceId]) rebuttals.value[evidenceId] = { accepted: false, rebuttal: '' }
+  rebuttals.value[evidenceId].rebuttal = rebuttal
 }
 
-const canSubmitReview = computed(() => {
+const canSubmitRebuttal = computed(() => {
   if (opponentEvidenceList.value.length === 0) return true
   for (const e of opponentEvidenceList.value) {
-    const r = reviews.value[e.id]
+    const r = rebuttals.value[e.id]
     if (!r) return false
     if (r.accepted === false && (!r.rebuttal || !r.rebuttal.trim())) return false
   }
   return true
 })
 
-function submitReview() {
+function submitRebuttal() {
   if (!caseData.value || !myRole.value) return
   for (const e of opponentEvidenceList.value) {
-    const r = reviews.value[e.id]
+    const r = rebuttals.value[e.id]
     if (r) {
-      setReview(caseId, myRole.value as EvidenceSubmittedBy, e.id, {
+      setRebuttal(caseId, myRole.value as EvidenceSubmittedBy, e.id, {
         accepted: r.accepted,
         rebuttal: r.rebuttal?.trim(),
       })
     }
   }
   submitting.value = true
-  setReviewComplete(caseId, myRole.value as EvidenceSubmittedBy)
+  setRebuttalComplete(caseId, myRole.value as EvidenceSubmittedBy)
   submitting.value = false
 }
 </script>
