@@ -46,6 +46,32 @@ export interface CaseDetailResponse {
   invite_token: string
   creator_evidence_complete: boolean
   counterparty_evidence_complete: boolean
+  creator_rebuttal_complete?: boolean
+  counterparty_rebuttal_complete?: boolean
+}
+
+/** 상대 증거 1건에 대한 반박 제출/수정 요청 */
+export interface RebuttalRequest {
+  accepted: boolean
+  rebuttal?: string | null
+}
+
+export interface RebuttalResponse {
+  id: string
+  evidence_id: string
+  rebutter_user_id: string
+  accepted: boolean
+  rebuttal: string | null
+  created_at: string
+}
+
+export interface CaseResultsResponse {
+  case_id: string
+  judgment_content: string | null
+  fault_ratio_creator: number | null
+  fault_ratio_counterparty: number | null
+  judged_at: string | null
+  status: string
 }
 
 /** 사건 참여 전 미리보기용 (인증 불필요). GET /cases/preview/{case_id} */
@@ -173,6 +199,27 @@ export function useCaseApi() {
     return request<EvidenceResponse[]>('GET', `${PREFIX}/case/${caseId}/counterpart-evidences`)
   }
 
+  /** 상대 증거 1건에 대한 반박 제출/수정. status=rebutting일 때만 가능 */
+  async function rebutEvidence(
+    caseId: string,
+    evidenceId: string,
+    body: RebuttalRequest,
+  ): Promise<RebuttalResponse> {
+    return request<RebuttalResponse>('POST', `${PREFIX}/case/${caseId}/evidence/${evidenceId}/rebut`, {
+      body: { accepted: body.accepted, rebuttal: body.rebuttal ?? null },
+    })
+  }
+
+  /** 내 반박 완료 선언. 양측 모두 완료 시 status=judging */
+  async function completeRebuttal(caseId: string): Promise<void> {
+    return request<void>('POST', `${PREFIX}/case/${caseId}/rebuttal/complete`)
+  }
+
+  /** 사건 판단(결과) 조회. 판결문/과실비율 등 */
+  async function getCaseResults(caseId: string): Promise<CaseResultsResponse> {
+    return request<CaseResultsResponse>('GET', `${PREFIX}/case/${caseId}/results`)
+  }
+
   /** 증거 이미지 URL. file_path가 상대 경로일 때 Supabase storage public URL로 변환 */
   function getEvidenceImageUrl(contentOrPath: string | null | undefined): string {
     if (!contentOrPath) return ''
@@ -195,6 +242,9 @@ export function useCaseApi() {
     completeEvidence,
     listMyEvidence,
     listCounterpartEvidence,
+    rebutEvidence,
+    completeRebuttal,
+    getCaseResults,
     getEvidenceImageUrl,
   }
 }

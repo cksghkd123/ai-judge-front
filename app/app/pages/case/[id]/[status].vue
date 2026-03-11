@@ -505,19 +505,22 @@ const canSubmitRebuttal = computed(() => {
   return true
 })
 
-function submitRebuttal() {
+async function submitRebuttal() {
   if (!caseData.value || !myRole.value) return
-  for (const e of opponentEvidenceList.value) {
-    const r = rebuttals.value[e.id]
-    if (r) {
-      setRebuttal(caseId, myRole.value as EvidenceSubmittedBy, e.id, {
-        accepted: r.accepted,
-        rebuttal: r.rebuttal?.trim(),
-      })
-    }
-  }
   submitting.value = true
-  setRebuttalComplete(caseId, myRole.value as EvidenceSubmittedBy)
-  submitting.value = false
+  try {
+    for (const e of opponentEvidenceList.value) {
+      const r = rebuttals.value[e.id]
+      if (r) {
+        await setRebuttal(caseId, myRole.value as EvidenceSubmittedBy, e.id, {
+          accepted: r.accepted,
+          rebuttal: r.rebuttal?.trim(),
+        })
+      }
+    }
+    await setRebuttalComplete(caseId, myRole.value as EvidenceSubmittedBy)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>

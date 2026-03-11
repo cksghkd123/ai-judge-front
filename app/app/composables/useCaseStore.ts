@@ -339,8 +339,8 @@ export function useCaseStore() {
         defendantEvidenceComplete: false,
         plaintiffRebuttals: {},
         defendantRebuttals: {},
-        plaintiffRebuttalComplete: false,
-        defendantRebuttalComplete: false,
+        plaintiffRebuttalComplete: detail.creator_rebuttal_complete ?? false,
+        defendantRebuttalComplete: detail.counterparty_rebuttal_complete ?? false,
       }
       cases.value = { ...cases.value, [caseId]: caseData }
       return caseData
@@ -378,8 +378,8 @@ export function useCaseStore() {
       defendantEvidenceComplete: detail.counterparty_evidence_complete,
       plaintiffRebuttals: {},
       defendantRebuttals: {},
-      plaintiffRebuttalComplete: false,
-      defendantRebuttalComplete: false,
+      plaintiffRebuttalComplete: detail.creator_rebuttal_complete ?? false,
+      defendantRebuttalComplete: detail.counterparty_rebuttal_complete ?? false,
     }
     cases.value = { ...cases.value, [caseId]: caseData }
     return caseData
@@ -492,14 +492,21 @@ export function useCaseStore() {
     }
   }
 
-  function setRebuttal(
+  async function setRebuttal(
     caseId: string,
     submittedBy: EvidenceSubmittedBy,
     evidenceId: string,
     rebuttal: EvidenceRebuttal,
-  ) {
+  ): Promise<void> {
     const c = cases.value[caseId]
     if (!c) return
+    if (isApiMode()) {
+      const api = useCaseApi()
+      await api.rebutEvidence(caseId, evidenceId, {
+        accepted: rebuttal.accepted,
+        rebuttal: rebuttal.rebuttal ?? null,
+      })
+    }
     if (submittedBy === 'plaintiff') {
       updateCase(caseId, {
         plaintiffRebuttals: { ...c.plaintiffRebuttals, [evidenceId]: rebuttal },
@@ -511,9 +518,15 @@ export function useCaseStore() {
     }
   }
 
-  function setRebuttalComplete(caseId: string, submittedBy: EvidenceSubmittedBy) {
+  async function setRebuttalComplete(caseId: string, submittedBy: EvidenceSubmittedBy): Promise<void> {
     const c = cases.value[caseId]
     if (!c) return
+    if (isApiMode()) {
+      const api = useCaseApi()
+      await api.completeRebuttal(caseId)
+      await fetchCaseFromApi(caseId)
+      return
+    }
     if (submittedBy === 'plaintiff') {
       updateCase(caseId, { plaintiffRebuttalComplete: true })
     } else {

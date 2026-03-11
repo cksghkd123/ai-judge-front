@@ -1,11 +1,12 @@
 <template>
-  <main class="min-h-screen flex flex-col items-center justify-center p-6 bg-paper text-ink font-body">
+  <main
+    class="min-h-screen flex flex-col items-center justify-center p-6 bg-paper text-ink font-body"
+  >
     <p v-if="!caseData && !notFound" class="m-0 text-ink/80">사건 정보를 불러오는 중...</p>
     <section
       v-else-if="notFound"
       class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard"
     >
-      <p class="m-0 text-ink/80">해당 사건을 찾을 수 없어요.</p>
       <NuxtLink
         to="/dashboard"
         class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard text-center no-underline"
