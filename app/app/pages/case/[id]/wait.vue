@@ -21,32 +21,35 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const router = useRouter()
 const caseId = route.params.id as string
-const { getCase, updateCase } = useCaseStore()
+const { getCase, isApiMode, fetchCaseFromApi } = useCaseStore()
 
 const caseData = computed(() => getCase(caseId))
+const api = useCaseApi()
 
 onMounted(() => {
   if (!caseData.value) {
     router.replace('/dashboard')
     return
   }
-  updateCase(caseId, { status: 'judging' })
 
-  const delay = 2500
-  const t = setTimeout(() => {
-    updateCase(caseId, {
-      status: 'completed',
-      verdictText:
-        '원고와 피고의 주장을 검토한 결과, 본 재판소는 다음과 같이 판단한다.\n\n' +
-        '1. 원고의 주장 요지: 고소장 및 제출 의견에 기재된 바와 같다.\n' +
-        '2. 피고의 주장 요지: 제출 의견에 기재된 바와 같다.\n\n' +
-        '3. 판단: 쌍방에게 모두 일정한 과실이 인정되나, 그 비율을 4 대 6으로 보는 것이 타당하다.\n\n' +
-        '4. 결론: 원고 40, 피고 60의 과실 비율로 본건을 종결한다.',
-      faultRatio: { plaintiff: 40, defendant: 60 },
-    })
-    router.replace(`/case/${caseId}/verdict`)
-  }, delay)
-  onUnmounted(() => clearTimeout(t))
+  if (!isApiMode()) {
+    return
+  }
+
+  const intervalMs = 3000
+  const t = setInterval(async () => {
+    try {
+      const detail = await api.getCaseDetail(caseId)
+      if (detail.status === 'completed') {
+        clearInterval(t)
+        await fetchCaseFromApi(caseId)
+        router.replace(`/case/${caseId}/verdict`)
+      }
+    } catch {
+      // ignore, keep polling
+    }
+  }, intervalMs)
+
+  onUnmounted(() => clearInterval(t))
 })
 </script>
-

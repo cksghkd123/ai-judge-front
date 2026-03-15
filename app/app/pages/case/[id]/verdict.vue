@@ -1,6 +1,6 @@
 <template>
   <main class="min-h-screen flex flex-col items-center p-6 pb-12 bg-paper text-ink font-body">
-    <template v-if="caseData && (caseData.status === 'completed' || caseData.verdictText)">
+    <template v-if="caseData && canShowVerdict">
       <article class="w-full max-w-2xl flex flex-col gap-6">
         <!-- 상단: 사건 제목 + 판결문 헤딩 -->
         <header class="text-center border-b-4 border-ink pb-4">
@@ -84,22 +84,22 @@
           <p v-else class="m-0 text-ink/70 text-sm">(제출 증거 없음)</p>
         </section>
 
-        <!-- 4영역: AI 판결문 본문 -->
+        <!-- 4영역: AI 판결문 본문 (API: judgment_content / 로컬: verdictText) -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-accent/30">
           <h2 class="font-doodle text-lg font-bold m-0 mb-3">판사님의 판결</h2>
           <p class="m-0 text-ink whitespace-pre-wrap leading-relaxed">
-            {{ caseData.verdictText || '(판결문 없음)' }}
+            {{ verdictText || '(판결문 없음)' }}
           </p>
         </section>
 
-        <!-- 5영역: 최종 과실 비율 -->
+        <!-- 5영역: 최종 과실 비율 (API: fault_ratio_creator/counterparty / 로컬: faultRatio) -->
         <section
-          v-if="caseData.faultRatio"
+          v-if="displayFaultRatio"
           class="border-4 border-ink rounded-lg p-5 shadow-hard bg-primary text-paper text-center"
         >
           <h2 class="font-ui font-semibold text-sm m-0 mb-2 opacity-90">최종 과실</h2>
           <p class="font-heading font-extrabold text-2xl m-0 tracking-tight">
-            원고 {{ caseData.faultRatio.plaintiff }} : 피고 {{ caseData.faultRatio.defendant }}
+            원고 {{ displayFaultRatio.plaintiff }} : 피고 {{ displayFaultRatio.defendant }}
           </p>
         </section>
 
@@ -116,7 +116,7 @@
       v-else
       class="w-full max-w-md flex flex-col gap-4 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard"
     >
-      <p class="m-0 text-ink/80">판결문을 불러올 수 없어요.</p>
+      <p class="m-0 text-ink/80">{{ verdictMessage }}</p>
       <NuxtLink
         to="/dashboard"
         class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard text-center no-underline"
@@ -132,10 +132,58 @@ definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()
 const caseId = route.params.id as string
-const { getCase } = useCaseStore()
-const { getEvidenceImageUrl } = useCaseApi()
+const { getCase, isApiMode, fetchCaseFromApi } = useCaseStore()
+const { getEvidenceImageUrl, getCaseResults } = useCaseApi()
 
 const caseData = computed(() => getCase(caseId))
+
+const { data: caseResults } = await useAsyncData(
+  `verdict-results-${caseId}`,
+  async () => {
+    if (!isApiMode()) return null
+    try {
+      await fetchCaseFromApi(caseId)
+      return await getCaseResults(caseId)
+    } catch {
+      return null
+    }
+  },
+  { server: false },
+)
+
+const canShowVerdict = computed(() => {
+  if (!caseData.value) return false
+  if (isApiMode()) {
+    const res = caseResults.value
+    return res != null && res.status === 'completed'
+  }
+  return caseData.value.status === 'completed' || Boolean(caseData.value.verdictText)
+})
+
+const verdictText = computed(() => {
+  if (isApiMode() && caseResults.value?.judgment_content != null) {
+    return caseResults.value.judgment_content
+  }
+  return caseData.value?.verdictText ?? null
+})
+
+const displayFaultRatio = computed<{ plaintiff: number; defendant: number } | null>(() => {
+  if (isApiMode() && caseResults.value) {
+    const c = caseResults.value.fault_ratio_creator
+    const p = caseResults.value.fault_ratio_counterparty
+    if (c != null && p != null) return { plaintiff: c, defendant: p }
+    return null
+  }
+  return caseData.value?.faultRatio ?? null
+})
+
+const verdictMessage = computed(() => {
+  if (!caseData.value) return '판결문을 불러올 수 없어요.'
+  if (isApiMode() && caseResults.value != null && caseResults.value.status !== 'completed') {
+    return '아직 판결이 완료되지 않았어요.'
+  }
+  return '판결문을 불러올 수 없어요.'
+})
 
 function formatDate(iso: string) {
   try {
