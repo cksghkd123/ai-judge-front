@@ -43,6 +43,7 @@ export interface CaseData {
   defendantRebuttalComplete: boolean
   verdictText?: string
   faultRatio?: FaultRatio
+  judgeAgentId?: string
 }
 
 const STORAGE_KEY = 'ai-judge-cases'
@@ -99,10 +100,18 @@ function migrateFromLegacy(data: Record<string, unknown>): Record<string, CaseDa
         (c.plaintiffEvidenceComplete as boolean) ?? plaintiffEvidence.length > 0,
       defendantEvidenceComplete:
         (c.defendantEvidenceComplete as boolean) ?? defendantEvidence.length > 0,
-      plaintiffRebuttals: (c.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ?? (c.plaintiffReviews as Record<string, EvidenceRebuttal>) ?? {},
-      defendantRebuttals: (c.defendantRebuttals as Record<string, EvidenceRebuttal>) ?? (c.defendantReviews as Record<string, EvidenceRebuttal>) ?? {},
-      plaintiffRebuttalComplete: (c.plaintiffRebuttalComplete as boolean) ?? (c.plaintiffReviewComplete as boolean) ?? false,
-      defendantRebuttalComplete: (c.defendantRebuttalComplete as boolean) ?? (c.defendantReviewComplete as boolean) ?? false,
+      plaintiffRebuttals:
+        (c.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ??
+        (c.plaintiffReviews as Record<string, EvidenceRebuttal>) ??
+        {},
+      defendantRebuttals:
+        (c.defendantRebuttals as Record<string, EvidenceRebuttal>) ??
+        (c.defendantReviews as Record<string, EvidenceRebuttal>) ??
+        {},
+      plaintiffRebuttalComplete:
+        (c.plaintiffRebuttalComplete as boolean) ?? (c.plaintiffReviewComplete as boolean) ?? false,
+      defendantRebuttalComplete:
+        (c.defendantRebuttalComplete as boolean) ?? (c.defendantReviewComplete as boolean) ?? false,
       verdictText: c.verdictText as string | undefined,
       faultRatio: c.faultRatio as FaultRatio | undefined,
     }
@@ -140,10 +149,22 @@ function loadFromStorage(): Record<string, CaseData> {
                 : [],
               plaintiffEvidenceComplete: (item.plaintiffEvidenceComplete as boolean) ?? false,
               defendantEvidenceComplete: (item.defendantEvidenceComplete as boolean) ?? false,
-              plaintiffRebuttals: (item.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ?? (item.plaintiffReviews as Record<string, EvidenceRebuttal>) ?? {},
-              defendantRebuttals: (item.defendantRebuttals as Record<string, EvidenceRebuttal>) ?? (item.defendantReviews as Record<string, EvidenceRebuttal>) ?? {},
-              plaintiffRebuttalComplete: (item.plaintiffRebuttalComplete as boolean) ?? (item.plaintiffReviewComplete as boolean) ?? false,
-              defendantRebuttalComplete: (item.defendantRebuttalComplete as boolean) ?? (item.defendantReviewComplete as boolean) ?? false,
+              plaintiffRebuttals:
+                (item.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ??
+                (item.plaintiffReviews as Record<string, EvidenceRebuttal>) ??
+                {},
+              defendantRebuttals:
+                (item.defendantRebuttals as Record<string, EvidenceRebuttal>) ??
+                (item.defendantReviews as Record<string, EvidenceRebuttal>) ??
+                {},
+              plaintiffRebuttalComplete:
+                (item.plaintiffRebuttalComplete as boolean) ??
+                (item.plaintiffReviewComplete as boolean) ??
+                false,
+              defendantRebuttalComplete:
+                (item.defendantRebuttalComplete as boolean) ??
+                (item.defendantReviewComplete as boolean) ??
+                false,
             } as CaseData
           }
           return normalized
@@ -225,6 +246,7 @@ export function useCaseStore() {
     issue: string
     plaintiffId: string
     opponentIdentifier?: string
+    judgeAgentId?: string | null
   }): Promise<CaseData> {
     if (isApiMode()) {
       const api = useCaseApi()
@@ -232,6 +254,7 @@ export function useCaseStore() {
         title: payload.title,
         description: payload.complaintSummary,
         issue: payload.issue,
+        judge_agent_id: payload.judgeAgentId ?? undefined,
       })
       const caseData: CaseData = {
         id: res.id,
@@ -242,6 +265,7 @@ export function useCaseStore() {
         createdAt: res.created_at,
         plaintiffId: res.created_by,
         inviteToken: res.invite_token,
+        judgeAgentId: res.judge_agent_id,
         plaintiffEvidence: [],
         defendantEvidence: [],
         plaintiffEvidenceComplete: false,
@@ -341,6 +365,7 @@ export function useCaseStore() {
         defendantRebuttals: {},
         plaintiffRebuttalComplete: detail.creator_rebuttal_complete ?? false,
         defendantRebuttalComplete: detail.counterparty_rebuttal_complete ?? false,
+        judgeAgentId: detail.judge_agent_id,
       }
       cases.value = { ...cases.value, [caseId]: caseData }
       return caseData
@@ -380,6 +405,7 @@ export function useCaseStore() {
       defendantRebuttals: {},
       plaintiffRebuttalComplete: detail.creator_rebuttal_complete ?? false,
       defendantRebuttalComplete: detail.counterparty_rebuttal_complete ?? false,
+      judgeAgentId: detail.judge_agent_id,
     }
     cases.value = { ...cases.value, [caseId]: caseData }
     return caseData
@@ -518,7 +544,10 @@ export function useCaseStore() {
     }
   }
 
-  async function setRebuttalComplete(caseId: string, submittedBy: EvidenceSubmittedBy): Promise<void> {
+  async function setRebuttalComplete(
+    caseId: string,
+    submittedBy: EvidenceSubmittedBy,
+  ): Promise<void> {
     const c = cases.value[caseId]
     if (!c) return
     if (isApiMode()) {

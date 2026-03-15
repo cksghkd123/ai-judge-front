@@ -87,6 +87,9 @@
         <!-- 4영역: AI 판결문 본문 (API: judgment_content / 로컬: verdictText) -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-accent/30">
           <h2 class="font-doodle text-lg font-bold m-0 mb-3">판사님의 판결</h2>
+          <p v-if="judgeName" class="m-0 text-ink/80 text-sm mb-3">
+            {{ judgeName }}
+          </p>
           <p class="m-0 text-ink whitespace-pre-wrap leading-relaxed">
             {{ verdictText || '(판결문 없음)' }}
           </p>
@@ -133,9 +136,26 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const caseId = route.params.id as string
 const { getCase, isApiMode, fetchCaseFromApi } = useCaseStore()
-const { getEvidenceImageUrl, getCaseResults } = useCaseApi()
+const { getEvidenceImageUrl, getCaseResults, getJudgeAgents } = useCaseApi()
 
 const caseData = computed(() => getCase(caseId))
+
+const { data: agentsList } = await useAsyncData(
+  `verdict-agents-${caseId}`,
+  async () => (isApiMode() ? getJudgeAgents() : []),
+  { server: false },
+)
+
+const judgeName = computed(() => {
+  const id = caseData.value?.judgeAgentId
+  if (!id) return null
+  const list = agentsList.value
+  if (list?.length) {
+    const a = list.find((ag) => ag.id === id)
+    return a?.name ?? id
+  }
+  return id
+})
 
 const { data: caseResults } = await useAsyncData(
   `verdict-results-${caseId}`,

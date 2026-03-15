@@ -40,6 +40,23 @@
             placeholder="예: 접촉 사고 시 과실 비율"
           />
         </div>
+        <div v-if="agents.length > 0" class="flex flex-col gap-1">
+          <label for="judge-agent" class="font-ui text-sm font-semibold">판사 선택</label>
+          <select
+            id="judge-agent"
+            v-model="form.judgeAgentId"
+            class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 focus:border-ink outline-none transition duration-150"
+          >
+            <option
+              v-for="a in agents"
+              :key="a.id"
+              :value="a.id"
+            >
+              {{ a.name }}
+            </option>
+          </select>
+          <p class="m-0 text-ink/60 text-xs">이 사건을 맡을 AI 판사를 선택해 주세요.</p>
+        </div>
         <button
           type="submit"
           class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
@@ -55,27 +72,46 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-const { createCase } = useCaseStore()
+const { createCase, isApiMode } = useCaseStore()
 const { user } = useAuth()
 const router = useRouter()
+const { getJudgeAgents } = useCaseApi()
 
 const form = reactive({
   title: '',
   complaintSummary: '',
   issue: '',
+  judgeAgentId: 'default' as string,
 })
 
+const agents = ref<Array<{ id: string; name: string }>>([])
 const submitting = ref(false)
 
+onMounted(async () => {
+  if (isApiMode()) {
+    try {
+      agents.value = await getJudgeAgents()
+      const first = agents.value[0]
+      if (first && !form.judgeAgentId) {
+        form.judgeAgentId = first.id
+      }
+    } catch {
+      agents.value = []
+    }
+  }
+})
+
 const onSubmit = async () => {
-  if (!user.value?.id) return
+  const uid = user.value?.id
+  if (!uid) return
   submitting.value = true
   try {
     const caseData = await createCase({
       title: form.title,
       complaintSummary: form.complaintSummary,
       issue: form.issue.trim() || '논점 미기재',
-      plaintiffId: user.value.id,
+      plaintiffId: uid,
+      judgeAgentId: isApiMode() ? (form.judgeAgentId || undefined) : undefined,
     })
     router.push(`/case/${caseData.id}/invite`)
   } finally {

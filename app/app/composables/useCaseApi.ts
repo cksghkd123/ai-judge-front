@@ -7,6 +7,7 @@ export interface CreateCaseRequest {
   title: string
   description: string
   issue: string
+  judge_agent_id?: string | null
 }
 
 export interface CreateCaseResponse {
@@ -18,6 +19,12 @@ export interface CreateCaseResponse {
   created_by: string
   created_at: string
   invite_token: string
+  judge_agent_id: string
+}
+
+export interface JudgeAgent {
+  id: string
+  name: string
 }
 
 export interface JoinCaseRequest {
@@ -48,6 +55,7 @@ export interface CaseDetailResponse {
   counterparty_evidence_complete: boolean
   creator_rebuttal_complete?: boolean
   counterparty_rebuttal_complete?: boolean
+  judge_agent_id?: string
 }
 
 /** 상대 증거 1건에 대한 반박 제출/수정 요청 */
@@ -137,6 +145,11 @@ export function useCaseApi() {
     })
   }
 
+  async function getJudgeAgents(): Promise<JudgeAgent[]> {
+    const list = await request<Array<Record<string, string>>>('GET', `${PREFIX}/agents`)
+    return list.map((item) => ({ id: item.id ?? '', name: item.name ?? item.id ?? '' }))
+  }
+
   async function createCase(body: CreateCaseRequest): Promise<CreateCaseResponse> {
     return request<CreateCaseResponse>('POST', `${PREFIX}/case`, { body })
   }
@@ -205,9 +218,13 @@ export function useCaseApi() {
     evidenceId: string,
     body: RebuttalRequest,
   ): Promise<RebuttalResponse> {
-    return request<RebuttalResponse>('POST', `${PREFIX}/case/${caseId}/evidence/${evidenceId}/rebut`, {
-      body: { accepted: body.accepted, rebuttal: body.rebuttal ?? null },
-    })
+    return request<RebuttalResponse>(
+      'POST',
+      `${PREFIX}/case/${caseId}/evidence/${evidenceId}/rebut`,
+      {
+        body: { accepted: body.accepted, rebuttal: body.rebuttal ?? null },
+      },
+    )
   }
 
   /** 내 반박 완료 선언. 양측 모두 완료 시 status=judging */
@@ -233,6 +250,7 @@ export function useCaseApi() {
 
   return {
     hasApi,
+    getJudgeAgents,
     createCase,
     joinCase,
     listCases,
