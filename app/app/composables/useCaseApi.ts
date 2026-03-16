@@ -8,6 +8,11 @@ export interface CreateCaseRequest {
   description: string
   issue: string
   judge_agent_id?: string | null
+  claimant_name?: string | null
+  claimant_address?: string | null
+  /** 백엔드는 list 타입. 문자열이면 보내지 않거나 빈 배열로 처리 */
+  claimant_jobs?: string[] | null
+  claimant_profile_image?: string | null
 }
 
 export interface CreateCaseResponse {
@@ -17,6 +22,10 @@ export interface CreateCaseResponse {
   issue: string
   status: string
   claimant_id: string
+  claimant_name?: string | null
+  claimant_address?: string | null
+  claimant_jobs?: string[] | null
+  claimant_profile_image?: string | null
   created_at: string
   invite_token: string
   judge_agent_id: string

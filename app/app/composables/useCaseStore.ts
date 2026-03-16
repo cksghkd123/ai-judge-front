@@ -301,14 +301,30 @@ export function useCaseStore() {
     claimantId: string
     opponentIdentifier?: string
     judgeAgentId?: string | null
+    claimantName?: string | null
+    claimantAddress?: string | null
+    claimantJobs?: string[] | string | null
+    claimantProfileImage?: string | null
   }): Promise<CaseData> {
     if (isApiMode()) {
       const api = useCaseApi()
+      const jobs =
+        payload.claimantJobs == null
+          ? undefined
+          : Array.isArray(payload.claimantJobs)
+            ? payload.claimantJobs
+            : payload.claimantJobs.trim()
+              ? [payload.claimantJobs.trim()]
+              : undefined
       const res = await api.createCase({
         title: payload.title,
         description: payload.complaintSummary,
         issue: payload.issue,
         judge_agent_id: payload.judgeAgentId ?? undefined,
+        claimant_name: payload.claimantName ?? undefined,
+        claimant_address: payload.claimantAddress ?? undefined,
+        claimant_jobs: jobs ?? undefined,
+        claimant_profile_image: payload.claimantProfileImage ?? undefined,
       })
       const caseData: CaseData = {
         id: res.id,
@@ -320,6 +336,12 @@ export function useCaseStore() {
         claimantId: res.claimant_id,
         inviteToken: res.invite_token,
         judgeAgentId: res.judge_agent_id,
+        claimantName: res.claimant_name ?? undefined,
+        claimantAddress: res.claimant_address ?? undefined,
+        claimantJobs: Array.isArray(res.claimant_jobs)
+          ? res.claimant_jobs.join(', ')
+          : ((res.claimant_jobs as string | undefined) ?? undefined),
+        claimantProfileImage: res.claimant_profile_image ?? undefined,
         claimantEvidence: [],
         respondentEvidence: [],
         claimantEvidenceComplete: false,

@@ -152,17 +152,46 @@ const prevJudge = () => {
   form.judgeAgentId = target.id
 }
 
+function getClaimantProfileFromUser(): {
+  claimantName?: string
+  claimantAddress?: string
+  claimantJobs?: string[]
+  claimantProfileImage?: string
+} {
+  const u = user.value
+  if (!u?.user_metadata) return {}
+  const meta = u.user_metadata as Record<string, unknown>
+  const name = (meta.full_name as string) || (meta.name as string) || ''
+  const address = (meta.address as string) || ''
+  const jobRaw = meta.job
+  const jobs: string[] = Array.isArray(jobRaw)
+    ? (jobRaw as string[]).map((j) => String(j).trim()).filter(Boolean)
+    : typeof jobRaw === 'string' && jobRaw.trim()
+      ? jobRaw.split(',').map((s) => s.trim()).filter(Boolean)
+      : []
+  const profileImage =
+    (meta.profile_image as string) || (meta.avatar_url as string) || (meta.picture as string) || ''
+  return {
+    claimantName: name || undefined,
+    claimantAddress: address || undefined,
+    claimantJobs: jobs.length ? jobs : undefined,
+    claimantProfileImage: profileImage || undefined,
+  }
+}
+
 const onSubmit = async () => {
   const uid = user.value?.id
   if (!uid) return
   submitting.value = true
   try {
+    const profile = getClaimantProfileFromUser()
     const caseData = await createCase({
       title: form.title,
       complaintSummary: form.complaintSummary,
       issue: form.issue.trim() || '논점 미기재',
       claimantId: uid,
       judgeAgentId: isApiMode() ? form.judgeAgentId || undefined : undefined,
+      ...profile,
     })
     router.push(`/case/${caseData.id}/invite`)
   } finally {
