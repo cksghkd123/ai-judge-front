@@ -3,15 +3,10 @@
     class="min-h-screen flex flex-col items-center justify-center p-6 bg-paper text-ink font-body"
   >
     <div class="w-full max-w-md flex flex-col gap-6">
-      <NuxtLink
-        to="/dashboard"
-        class="self-start text-blue-pen hover:underline font-ui text-lg transition duration-150 ease-out"
-      >
-        ← 대시보드로 돌아가기
-      </NuxtLink>
-
       <section class="border-4 border-ink bg-paper p-6 rounded-lg shadow-hard flex flex-col gap-4">
-        <h1 class="font-heading font-extrabold tracking-tight text-2xl m-0 text-center">고소인 인적사항</h1>
+        <h1 class="font-heading font-extrabold tracking-tight text-2xl m-0 text-center">
+          고소인 인적사항
+        </h1>
 
         <div class="flex flex-col gap-3 p-4">
           <!-- 고소인 -->
@@ -69,11 +64,7 @@
             <span class="font-heading text-ink shrink-0 w-20">직업</span>
             <template v-if="editingJob">
               <div class="flex flex-col gap-2 flex-1 min-w-0">
-                <div
-                  v-for="(_, i) in editJobs"
-                  :key="i"
-                  class="flex items-center gap-2"
-                >
+                <div v-for="(_, i) in editJobs" :key="i" class="flex items-center gap-2">
                   <input
                     v-model="editJobs[i]"
                     type="text"
@@ -86,8 +77,16 @@
                     aria-label="삭제"
                     @click="removeJob(i)"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
-                      <path d="M216 48H40a8 8 0 0 0 0 16h8v144a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16V64h8a8 8 0 0 0 0-16ZM160 192H96V80h64Z"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 256 256"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M216 48H40a8 8 0 0 0 0 16h8v144a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16V64h8a8 8 0 0 0 0-16ZM160 192H96V80h64Z"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -99,7 +98,11 @@
                 >
                   + 직업 추가
                 </button>
-                <button type="button" class="btn-primary font-ui text-sm py-1.5 self-start" @click="confirmEditJob">
+                <button
+                  type="button"
+                  class="btn-primary font-ui text-sm py-1.5 self-start"
+                  @click="confirmEditJob"
+                >
                   완료
                 </button>
               </div>
@@ -172,10 +175,7 @@
           </div>
         </div>
 
-        <NuxtLink
-          to="/complaints"
-          class="btn-secondary font-ui w-full text-center"
-        >
+        <NuxtLink to="/complaints" class="btn-secondary font-ui w-full text-center">
           고소내역
         </NuxtLink>
 
@@ -188,7 +188,12 @@
         </p>
 
         <div class="flex flex-row gap-2 pt-2">
-          <button type="button" :disabled="loggingOut" class="btn-secondary font-ui flex-1" @click="handleSignOut">
+          <button
+            type="button"
+            :disabled="loggingOut"
+            class="btn-secondary font-ui flex-1"
+            @click="handleSignOut"
+          >
             {{ loggingOut ? '로그아웃 중...' : '로그아웃' }}
           </button>
           <button type="button" class="btn-danger font-ui flex-1" @click="showWithdrawModal = true">
@@ -210,15 +215,26 @@
         aria-labelledby="edit-name-title"
         aria-modal="true"
       >
-        <h2 id="edit-name-title" class="font-heading tracking-tight text-xl m-0">수정하시겠어요?</h2>
+        <h2 id="edit-name-title" class="font-heading tracking-tight text-xl m-0">
+          수정하시겠어요?
+        </h2>
         <p class="text-sm m-0 text-ink/80">
           이제 "{{ editFullName || '이름 없음' }}" 으로 사람들에게 보일 거예요.
         </p>
         <div class="flex gap-2 justify-end">
-          <button type="button" class="btn-secondary font-ui" @click="showEditNameCompleteModal = false">
+          <button
+            type="button"
+            class="btn-secondary font-ui"
+            @click="showEditNameCompleteModal = false"
+          >
             취소
           </button>
-          <button type="button" :disabled="saving" class="btn-primary font-ui" @click="confirmSaveName">
+          <button
+            type="button"
+            :disabled="saving"
+            class="btn-primary font-ui"
+            @click="confirmSaveName"
+          >
             {{ saving ? '저장 중...' : '확인' }}
           </button>
         </div>
@@ -237,7 +253,9 @@
           aria-labelledby="withdraw-title"
           aria-modal="true"
         >
-          <h2 id="withdraw-title" class="font-heading tracking-tight text-xl m-0">정말 탈퇴하시겠어요?</h2>
+          <h2 id="withdraw-title" class="font-heading tracking-tight text-xl m-0">
+            정말 탈퇴하시겠어요?
+          </h2>
           <p class="text-sm m-0 text-ink/80">
             탈퇴 시 계정이 삭제됩니다. 이 작업은 되돌릴 수 없어요.
           </p>
@@ -372,14 +390,9 @@ const hasProfileChanges = computed(() => {
   const newJobs = editJobs.value.map((j) => j.trim()).filter(Boolean)
   const currentJobs = jobsFromMetadata.value
   const jobChanged =
-    newJobs.length !== currentJobs.length ||
-    newJobs.some((j, i) => (currentJobs[i] ?? '') !== j)
+    newJobs.length !== currentJobs.length || newJobs.some((j, i) => (currentJobs[i] ?? '') !== j)
   const currentAddress = (user.value.user_metadata?.address as string) || ''
-  return (
-    editFullName.value !== currentName ||
-    jobChanged ||
-    editAddress.value !== currentAddress
-  )
+  return editFullName.value !== currentName || jobChanged || editAddress.value !== currentAddress
 })
 
 async function saveProfile() {

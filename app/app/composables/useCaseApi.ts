@@ -53,9 +53,10 @@ export interface CaseDetailResponse {
   my_role: 'claimant' | 'respondent'
   created_at: string
   invite_token: string
-  sender_name?: string
-  sender_jobs?: string | null
-  sender_address?: string | null
+  claimant_name?: string | null
+  claimant_jobs?: string | null
+  claimant_address?: string | null
+  claimant_profile_image?: string | null
   claimant_evidence_complete: boolean
   respondent_evidence_complete: boolean
   claimant_rebuttal_complete?: boolean
@@ -95,9 +96,10 @@ export interface CasePreviewResponse {
   issue: string
   status: string
   created_at: string
-  sender_name?: string
-  sender_jobs?: string | null
-  sender_address?: string | null
+  claimant_name?: string | null
+  claimant_jobs?: string | null
+  claimant_address?: string | null
+  claimant_profile_image?: string | null
 }
 
 export interface EvidenceResponse {

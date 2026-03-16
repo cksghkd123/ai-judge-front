@@ -33,9 +33,10 @@ export interface CaseData {
   respondentId?: string
   inviteToken: string
   opponentIdentifier?: string
-  senderName?: string
-  senderJobs?: string
-  senderAddress?: string
+  claimantName?: string
+  claimantJobs?: string
+  claimantAddress?: string
+  claimantProfileImage?: string
   claimantEvidence: Evidence[]
   respondentEvidence: Evidence[]
   claimantEvidenceComplete: boolean
@@ -411,9 +412,10 @@ export function useCaseStore() {
         respondentId: detail.respondent_id ?? undefined,
         inviteToken: detail.invite_token,
         opponentIdentifier: undefined,
-        senderName: detail.sender_name ?? undefined,
-        senderJobs: detail.sender_jobs ?? undefined,
-        senderAddress: detail.sender_address ?? undefined,
+        claimantName: detail.claimant_name ?? undefined,
+        claimantJobs: detail.claimant_jobs ?? undefined,
+        claimantAddress: detail.claimant_address ?? undefined,
+        claimantProfileImage: detail.claimant_profile_image ?? undefined,
         claimantEvidence: [],
         respondentEvidence: [],
         claimantEvidenceComplete: false,
@@ -454,9 +456,10 @@ export function useCaseStore() {
       respondentId,
       inviteToken: detail.invite_token,
       opponentIdentifier: undefined,
-      senderName: detail.sender_name ?? undefined,
-      senderJobs: detail.sender_jobs ?? undefined,
-      senderAddress: detail.sender_address ?? undefined,
+      claimantName: detail.claimant_name ?? undefined,
+      claimantJobs: detail.claimant_jobs ?? undefined,
+      claimantAddress: detail.claimant_address ?? undefined,
+      claimantProfileImage: detail.claimant_profile_image ?? undefined,
       claimantEvidence,
       respondentEvidence,
       claimantEvidenceComplete: detail.claimant_evidence_complete,
@@ -491,9 +494,10 @@ export function useCaseStore() {
         respondentId: undefined,
         inviteToken,
         opponentIdentifier: undefined,
-        senderName: preview.sender_name ?? undefined,
-        senderJobs: preview.sender_jobs ?? undefined,
-        senderAddress: preview.sender_address ?? undefined,
+        claimantName: preview.claimant_name ?? undefined,
+        claimantJobs: preview.claimant_jobs ?? undefined,
+        claimantAddress: preview.claimant_address ?? undefined,
+        claimantProfileImage: preview.claimant_profile_image ?? undefined,
         claimantEvidence: [],
         respondentEvidence: [],
         claimantEvidenceComplete: false,

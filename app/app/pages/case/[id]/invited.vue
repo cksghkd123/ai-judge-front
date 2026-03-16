@@ -31,28 +31,46 @@
             </p>
             <p class="text-sm text-ink/60 m-0 mt-2">논점: {{ caseData.issue }}</p>
             <div
-              v-if="caseData.senderName || caseData.senderJobs || caseData.senderAddress"
+              v-if="
+                caseData.claimantName ||
+                caseData.claimantJobs ||
+                caseData.claimantAddress ||
+                caseData.claimantProfileImage
+              "
               class="mt-3 border-2 border-dashed border-ink/50 rounded-lg p-3 bg-accent/20"
             >
               <p class="m-0 text-xs font-ui font-semibold text-ink/80">
-                보낸이 인적사항
+                청구인 인적사항
               </p>
-              <dl class="m-0 mt-2 space-y-1 text-sm">
-                <div v-if="caseData.senderName" class="flex gap-2">
-                  <dt class="font-ui font-semibold w-14 text-ink/70">이름</dt>
-                  <dd class="m-0 flex-1">{{ caseData.senderName }}</dd>
+              <div class="mt-2 flex items-start gap-3">
+                <div
+                  class="w-14 h-14 rounded-full border-2 border-ink/40 bg-paper overflow-hidden flex items-center justify-center shrink-0"
+                >
+                  <img
+                    v-if="caseData.claimantProfileImage"
+                    :src="caseData.claimantProfileImage"
+                    alt="청구인 프로필"
+                    class="w-full h-full object-cover"
+                  />
+                  <span v-else class="font-doodle text-xl text-ink/70" aria-hidden="true">✍️</span>
                 </div>
-                <div v-if="caseData.senderJobs" class="flex gap-2">
-                  <dt class="font-ui font-semibold w-14 text-ink/70">직업</dt>
-                  <dd class="m-0 flex-1">{{ caseData.senderJobs }}</dd>
-                </div>
-                <div v-if="caseData.senderAddress" class="flex gap-2">
-                  <dt class="font-ui font-semibold w-14 text-ink/70">주소</dt>
-                  <dd class="m-0 flex-1 whitespace-pre-wrap">
-                    {{ caseData.senderAddress }}
-                  </dd>
-                </div>
-              </dl>
+                <dl class="m-0 space-y-1 text-sm flex-1">
+                  <div v-if="caseData.claimantName" class="flex gap-2">
+                    <dt class="font-ui font-semibold w-14 text-ink/70">이름</dt>
+                    <dd class="m-0 flex-1">{{ caseData.claimantName }}</dd>
+                  </div>
+                  <div v-if="caseData.claimantJobs" class="flex gap-2">
+                    <dt class="font-ui font-semibold w-14 text-ink/70">직업</dt>
+                    <dd class="m-0 flex-1">{{ caseData.claimantJobs }}</dd>
+                  </div>
+                  <div v-if="caseData.claimantAddress" class="flex gap-2">
+                    <dt class="font-ui font-semibold w-14 text-ink/70">주소</dt>
+                    <dd class="m-0 flex-1 whitespace-pre-wrap">
+                      {{ caseData.claimantAddress }}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </div>
           </template>
           <template v-else>
