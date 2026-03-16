@@ -161,7 +161,7 @@ const onSubmit = async () => {
       title: form.title,
       complaintSummary: form.complaintSummary,
       issue: form.issue.trim() || '논점 미기재',
-      plaintiffId: uid,
+      claimantId: uid,
       judgeAgentId: isApiMode() ? form.judgeAgentId || undefined : undefined,
     })
     router.push(`/case/${caseData.id}/invite`)

@@ -143,7 +143,7 @@ const isParticipant = computed(() => {
   const c = caseData.value
   const uid = user.value?.id
   if (!c || !uid) return false
-  return c.plaintiffId === uid || c.defendantId === uid
+  return c.claimantId === uid || c.respondentId === uid
 })
 
 const loading = ref(false)

@@ -1,13 +1,13 @@
 export type CaseStatus = 'pending' | 'active' | 'rebutting' | 'judging' | 'completed'
 
 export interface FaultRatio {
-  plaintiff: number
-  defendant: number
+  claimant: number
+  respondent: number
 }
 
 export type EvidenceType = 'text' | 'chat' | 'photo'
 
-export type EvidenceSubmittedBy = 'plaintiff' | 'defendant'
+export type EvidenceSubmittedBy = 'claimant' | 'respondent'
 
 export interface Evidence {
   id: string
@@ -29,27 +29,49 @@ export interface CaseData {
   issue: string
   status: CaseStatus
   createdAt: string
-  plaintiffId: string
-  defendantId?: string
+  claimantId: string
+  respondentId?: string
   inviteToken: string
   opponentIdentifier?: string
   senderName?: string
   senderJobs?: string
   senderAddress?: string
-  plaintiffEvidence: Evidence[]
-  defendantEvidence: Evidence[]
-  plaintiffEvidenceComplete: boolean
-  defendantEvidenceComplete: boolean
-  plaintiffRebuttals: Record<string, EvidenceRebuttal>
-  defendantRebuttals: Record<string, EvidenceRebuttal>
-  plaintiffRebuttalComplete: boolean
-  defendantRebuttalComplete: boolean
+  claimantEvidence: Evidence[]
+  respondentEvidence: Evidence[]
+  claimantEvidenceComplete: boolean
+  respondentEvidenceComplete: boolean
+  claimantRebuttals: Record<string, EvidenceRebuttal>
+  respondentRebuttals: Record<string, EvidenceRebuttal>
+  claimantRebuttalComplete: boolean
+  respondentRebuttalComplete: boolean
   verdictText?: string
   faultRatio?: FaultRatio
   judgeAgentId?: string
 }
 
 const STORAGE_KEY = 'ai-judge-cases'
+
+function normalizeFaultRatio(
+  r: FaultRatio | { plaintiff?: number; defendant?: number } | undefined,
+): FaultRatio | undefined {
+  if (!r || typeof r !== 'object') return undefined
+  const claimant = (r as FaultRatio).claimant ?? (r as { plaintiff?: number }).plaintiff
+  const respondent = (r as FaultRatio).respondent ?? (r as { defendant?: number }).defendant
+  if (claimant != null && respondent != null) return { claimant, respondent }
+  return undefined
+}
+
+function normalizeEvidenceList(list: unknown): Evidence[] {
+  if (!Array.isArray(list)) return []
+  return list.map((e: Record<string, unknown>) => ({
+    ...e,
+    submittedBy: (e.submittedBy === 'claimant' || e.submittedBy === 'respondent'
+      ? e.submittedBy
+      : e.submittedBy === 'plaintiff'
+        ? 'claimant'
+        : 'respondent') as EvidenceSubmittedBy,
+  })) as Evidence[]
+}
 
 function migrateFromLegacy(data: Record<string, unknown>): Record<string, CaseData> {
   const result: Record<string, CaseData> = {}
@@ -65,27 +87,31 @@ function migrateFromLegacy(data: Record<string, unknown>): Record<string, CaseDa
   for (const [id, raw] of Object.entries(data)) {
     const c = raw as Record<string, unknown>
     if (!c || typeof c !== 'object' || !c.id) continue
-    const plaintiffSubmission = c.plaintiffSubmission as string | undefined
-    const defendantSubmission = c.defendantSubmission as string | undefined
-    const plaintiffEvidence: Evidence[] = []
-    const defendantEvidence: Evidence[] = []
-    if (plaintiffSubmission) {
-      plaintiffEvidence.push({
+    const claimantSubmission = (c.plaintiffSubmission ?? c.claimantSubmission) as string | undefined
+    const respondentSubmission = (c.defendantSubmission ?? c.respondentSubmission) as
+      | string
+      | undefined
+    const claimantEvidence: Evidence[] = []
+    const respondentEvidence: Evidence[] = []
+    if (claimantSubmission) {
+      claimantEvidence.push({
         id: crypto.randomUUID(),
         type: 'text',
-        content: plaintiffSubmission,
-        submittedBy: 'plaintiff',
+        content: claimantSubmission,
+        submittedBy: 'claimant',
       })
     }
-    if (defendantSubmission) {
-      defendantEvidence.push({
+    if (respondentSubmission) {
+      respondentEvidence.push({
         id: crypto.randomUUID(),
         type: 'text',
-        content: defendantSubmission,
-        submittedBy: 'defendant',
+        content: respondentSubmission,
+        submittedBy: 'respondent',
       })
     }
     const oldStatus = (c.status as string) || 'pending'
+    const legacyPl = c.plaintiffEvidence ?? c.claimantEvidence
+    const legacyDe = c.defendantEvidence ?? c.respondentEvidence
     result[id as string] = {
       id: c.id as string,
       title: (c.title as string) || '',
@@ -93,30 +119,42 @@ function migrateFromLegacy(data: Record<string, unknown>): Record<string, CaseDa
       issue: (c.issue as string) || '',
       status: statusMap[oldStatus] ?? (oldStatus as CaseStatus),
       createdAt: (c.createdAt as string) || new Date().toISOString(),
-      plaintiffId: c.plaintiffId as string,
-      defendantId: c.defendantId as string | undefined,
+      claimantId: (c.claimantId ?? c.plaintiffId) as string,
+      respondentId: (c.respondentId ?? c.defendantId) as string | undefined,
       inviteToken: (c.inviteToken as string) || crypto.randomUUID(),
       opponentIdentifier: c.opponentIdentifier as string | undefined,
-      plaintiffEvidence: (c.plaintiffEvidence as Evidence[]) ?? plaintiffEvidence,
-      defendantEvidence: (c.defendantEvidence as Evidence[]) ?? defendantEvidence,
-      plaintiffEvidenceComplete:
-        (c.plaintiffEvidenceComplete as boolean) ?? plaintiffEvidence.length > 0,
-      defendantEvidenceComplete:
-        (c.defendantEvidenceComplete as boolean) ?? defendantEvidence.length > 0,
-      plaintiffRebuttals:
+      claimantEvidence: legacyPl != null ? normalizeEvidenceList(legacyPl) : claimantEvidence,
+      respondentEvidence: legacyDe != null ? normalizeEvidenceList(legacyDe) : respondentEvidence,
+      claimantEvidenceComplete:
+        (c.claimantEvidenceComplete as boolean) ??
+        (c.plaintiffEvidenceComplete as boolean) ??
+        claimantEvidence.length > 0,
+      respondentEvidenceComplete:
+        (c.respondentEvidenceComplete as boolean) ??
+        (c.defendantEvidenceComplete as boolean) ??
+        respondentEvidence.length > 0,
+      claimantRebuttals:
+        (c.claimantRebuttals as Record<string, EvidenceRebuttal>) ??
         (c.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ??
         (c.plaintiffReviews as Record<string, EvidenceRebuttal>) ??
         {},
-      defendantRebuttals:
+      respondentRebuttals:
+        (c.respondentRebuttals as Record<string, EvidenceRebuttal>) ??
         (c.defendantRebuttals as Record<string, EvidenceRebuttal>) ??
         (c.defendantReviews as Record<string, EvidenceRebuttal>) ??
         {},
-      plaintiffRebuttalComplete:
-        (c.plaintiffRebuttalComplete as boolean) ?? (c.plaintiffReviewComplete as boolean) ?? false,
-      defendantRebuttalComplete:
-        (c.defendantRebuttalComplete as boolean) ?? (c.defendantReviewComplete as boolean) ?? false,
+      claimantRebuttalComplete:
+        (c.claimantRebuttalComplete as boolean) ??
+        (c.plaintiffRebuttalComplete as boolean) ??
+        (c.plaintiffReviewComplete as boolean) ??
+        false,
+      respondentRebuttalComplete:
+        (c.respondentRebuttalComplete as boolean) ??
+        (c.defendantRebuttalComplete as boolean) ??
+        (c.defendantReviewComplete as boolean) ??
+        false,
       verdictText: c.verdictText as string | undefined,
-      faultRatio: c.faultRatio as FaultRatio | undefined,
+      faultRatio: normalizeFaultRatio(c.faultRatio as FaultRatio | undefined),
     }
   }
   return result
@@ -133,41 +171,53 @@ function loadFromStorage(): Record<string, CaseData> {
             c &&
             typeof c === 'object' &&
             'inviteToken' in c &&
-            Array.isArray((c as Record<string, unknown>).plaintiffEvidence),
+            (Array.isArray((c as Record<string, unknown>).claimantEvidence) ||
+              Array.isArray((c as Record<string, unknown>).plaintiffEvidence)),
         )
         if (hasNewSchema) {
           const normalized: Record<string, CaseData> = {}
           for (const [k, v] of Object.entries(parsed)) {
             const item = v as Record<string, unknown>
             if (!item || typeof item !== 'object' || !item.id) continue
+            const claimantEv = item.claimantEvidence ?? item.plaintiffEvidence
+            const respondentEv = item.respondentEvidence ?? item.defendantEvidence
             normalized[k] = {
               ...item,
               issue: (item.issue as string) ?? '',
               inviteToken: (item.inviteToken as string) ?? crypto.randomUUID(),
-              plaintiffEvidence: Array.isArray(item.plaintiffEvidence)
-                ? (item.plaintiffEvidence as Evidence[])
-                : [],
-              defendantEvidence: Array.isArray(item.defendantEvidence)
-                ? (item.defendantEvidence as Evidence[])
-                : [],
-              plaintiffEvidenceComplete: (item.plaintiffEvidenceComplete as boolean) ?? false,
-              defendantEvidenceComplete: (item.defendantEvidenceComplete as boolean) ?? false,
-              plaintiffRebuttals:
+              claimantId: (item.claimantId ?? item.plaintiffId) as string,
+              respondentId: (item.respondentId ?? item.defendantId) as string | undefined,
+              claimantEvidence: normalizeEvidenceList(claimantEv),
+              respondentEvidence: normalizeEvidenceList(respondentEv),
+              claimantEvidenceComplete:
+                (item.claimantEvidenceComplete as boolean) ??
+                (item.plaintiffEvidenceComplete as boolean) ??
+                false,
+              respondentEvidenceComplete:
+                (item.respondentEvidenceComplete as boolean) ??
+                (item.defendantEvidenceComplete as boolean) ??
+                false,
+              claimantRebuttals:
+                (item.claimantRebuttals as Record<string, EvidenceRebuttal>) ??
                 (item.plaintiffRebuttals as Record<string, EvidenceRebuttal>) ??
                 (item.plaintiffReviews as Record<string, EvidenceRebuttal>) ??
                 {},
-              defendantRebuttals:
+              respondentRebuttals:
+                (item.respondentRebuttals as Record<string, EvidenceRebuttal>) ??
                 (item.defendantRebuttals as Record<string, EvidenceRebuttal>) ??
                 (item.defendantReviews as Record<string, EvidenceRebuttal>) ??
                 {},
-              plaintiffRebuttalComplete:
+              claimantRebuttalComplete:
+                (item.claimantRebuttalComplete as boolean) ??
                 (item.plaintiffRebuttalComplete as boolean) ??
                 (item.plaintiffReviewComplete as boolean) ??
                 false,
-              defendantRebuttalComplete:
+              respondentRebuttalComplete:
+                (item.respondentRebuttalComplete as boolean) ??
                 (item.defendantRebuttalComplete as boolean) ??
                 (item.defendantReviewComplete as boolean) ??
                 false,
+              faultRatio: normalizeFaultRatio(item.faultRatio as FaultRatio | undefined),
             } as CaseData
           }
           return normalized
@@ -196,7 +246,7 @@ export type CaseListItemApi = {
   title: string
   status: string
   created_at: string
-  my_role: 'creator' | 'counterparty'
+  my_role: 'claimant' | 'respondent'
 }
 
 function isApiMode(): boolean {
@@ -247,7 +297,7 @@ export function useCaseStore() {
     title: string
     complaintSummary: string
     issue: string
-    plaintiffId: string
+    claimantId: string
     opponentIdentifier?: string
     judgeAgentId?: string | null
   }): Promise<CaseData> {
@@ -266,17 +316,17 @@ export function useCaseStore() {
         issue: res.issue,
         status: res.status as CaseStatus,
         createdAt: res.created_at,
-        plaintiffId: res.created_by,
+        claimantId: res.claimant_id,
         inviteToken: res.invite_token,
         judgeAgentId: res.judge_agent_id,
-        plaintiffEvidence: [],
-        defendantEvidence: [],
-        plaintiffEvidenceComplete: false,
-        defendantEvidenceComplete: false,
-        plaintiffRebuttals: {},
-        defendantRebuttals: {},
-        plaintiffRebuttalComplete: false,
-        defendantRebuttalComplete: false,
+        claimantEvidence: [],
+        respondentEvidence: [],
+        claimantEvidenceComplete: false,
+        respondentEvidenceComplete: false,
+        claimantRebuttals: {},
+        respondentRebuttals: {},
+        claimantRebuttalComplete: false,
+        respondentRebuttalComplete: false,
       }
       cases.value = { ...cases.value, [res.id]: caseData }
       return caseData
@@ -291,17 +341,17 @@ export function useCaseStore() {
       issue: payload.issue,
       status: 'pending',
       createdAt: now,
-      plaintiffId: payload.plaintiffId,
+      claimantId: payload.claimantId,
       inviteToken,
       opponentIdentifier: payload.opponentIdentifier,
-      plaintiffEvidence: [],
-      defendantEvidence: [],
-      plaintiffEvidenceComplete: false,
-      defendantEvidenceComplete: false,
-      plaintiffRebuttals: {},
-      defendantRebuttals: {},
-      plaintiffRebuttalComplete: false,
-      defendantRebuttalComplete: false,
+      claimantEvidence: [],
+      respondentEvidence: [],
+      claimantEvidenceComplete: false,
+      respondentEvidenceComplete: false,
+      claimantRebuttals: {},
+      respondentRebuttals: {},
+      claimantRebuttalComplete: false,
+      respondentRebuttalComplete: false,
     }
     cases.value = { ...cases.value, [id]: caseData }
     return caseData
@@ -323,7 +373,7 @@ export function useCaseStore() {
   async function joinCase(
     caseId: string,
     inviteToken: string,
-    _defendantId: string,
+    _respondentId: string,
   ): Promise<boolean> {
     if (isApiMode()) {
       const api = useCaseApi()
@@ -331,8 +381,8 @@ export function useCaseStore() {
       return true
     }
     const c = cases.value[caseId]
-    if (!c || c.inviteToken !== inviteToken || c.defendantId) return false
-    updateCase(caseId, { defendantId: _defendantId, status: 'active' })
+    if (!c || c.inviteToken !== inviteToken || c.respondentId) return false
+    updateCase(caseId, { respondentId: _respondentId, status: 'active' })
     return true
   }
 
@@ -357,21 +407,21 @@ export function useCaseStore() {
         issue: detail.issue,
         status: detail.status as CaseStatus,
         createdAt: detail.created_at,
-        plaintiffId: detail.created_by,
-        defendantId: detail.counterpart_id ?? undefined,
+        claimantId: detail.claimant_id,
+        respondentId: detail.respondent_id ?? undefined,
         inviteToken: detail.invite_token,
         opponentIdentifier: undefined,
         senderName: detail.sender_name ?? undefined,
         senderJobs: detail.sender_jobs ?? undefined,
         senderAddress: detail.sender_address ?? undefined,
-        plaintiffEvidence: [],
-        defendantEvidence: [],
-        plaintiffEvidenceComplete: false,
-        defendantEvidenceComplete: false,
-        plaintiffRebuttals: {},
-        defendantRebuttals: {},
-        plaintiffRebuttalComplete: detail.creator_rebuttal_complete ?? false,
-        defendantRebuttalComplete: detail.counterparty_rebuttal_complete ?? false,
+        claimantEvidence: [],
+        respondentEvidence: [],
+        claimantEvidenceComplete: false,
+        respondentEvidenceComplete: false,
+        claimantRebuttals: {},
+        respondentRebuttals: {},
+        claimantRebuttalComplete: detail.claimant_rebuttal_complete ?? false,
+        respondentRebuttalComplete: detail.respondent_rebuttal_complete ?? false,
         judgeAgentId: detail.judge_agent_id,
       }
       cases.value = { ...cases.value, [caseId]: caseData }
@@ -380,20 +430,19 @@ export function useCaseStore() {
 
     const [myEvidence, counterpartEvidence] = await Promise.all([
       api.listMyEvidence(caseId),
-      api.listCounterpartEvidence(caseId),
+      api.listCounterpartyEvidence(caseId),
     ])
-    const plaintiffId = detail.created_by
-    const defendantId = detail.counterpart_id ?? undefined
-    const mySubmittedBy: EvidenceSubmittedBy =
-      detail.my_role === 'creator' ? 'plaintiff' : 'defendant'
+    const claimantId = detail.claimant_id
+    const respondentId = detail.respondent_id ?? undefined
+    const mySubmittedBy: EvidenceSubmittedBy = detail.my_role
     const oppSubmittedBy: EvidenceSubmittedBy =
-      detail.my_role === 'creator' ? 'defendant' : 'plaintiff'
-    const plaintiffEvidence = (detail.my_role === 'creator' ? myEvidence : counterpartEvidence).map(
-      (r) => mapEvidenceResponseToEvidence(r, 'plaintiff'),
+      detail.my_role === 'claimant' ? 'respondent' : 'claimant'
+    const claimantEvidence = (detail.my_role === 'claimant' ? myEvidence : counterpartEvidence).map(
+      (r) => mapEvidenceResponseToEvidence(r, 'claimant'),
     )
-    const defendantEvidence = (detail.my_role === 'creator' ? counterpartEvidence : myEvidence).map(
-      (r) => mapEvidenceResponseToEvidence(r, 'defendant'),
-    )
+    const respondentEvidence = (
+      detail.my_role === 'claimant' ? counterpartEvidence : myEvidence
+    ).map((r) => mapEvidenceResponseToEvidence(r, 'respondent'))
     const caseData: CaseData = {
       id: detail.id,
       title: detail.title,
@@ -401,21 +450,21 @@ export function useCaseStore() {
       issue: detail.issue,
       status: detail.status as CaseStatus,
       createdAt: detail.created_at,
-      plaintiffId,
-      defendantId,
+      claimantId,
+      respondentId,
       inviteToken: detail.invite_token,
       opponentIdentifier: undefined,
       senderName: detail.sender_name ?? undefined,
       senderJobs: detail.sender_jobs ?? undefined,
       senderAddress: detail.sender_address ?? undefined,
-      plaintiffEvidence,
-      defendantEvidence,
-      plaintiffEvidenceComplete: detail.creator_evidence_complete,
-      defendantEvidenceComplete: detail.counterparty_evidence_complete,
-      plaintiffRebuttals: {},
-      defendantRebuttals: {},
-      plaintiffRebuttalComplete: detail.creator_rebuttal_complete ?? false,
-      defendantRebuttalComplete: detail.counterparty_rebuttal_complete ?? false,
+      claimantEvidence,
+      respondentEvidence,
+      claimantEvidenceComplete: detail.claimant_evidence_complete,
+      respondentEvidenceComplete: detail.respondent_evidence_complete,
+      claimantRebuttals: {},
+      respondentRebuttals: {},
+      claimantRebuttalComplete: detail.claimant_rebuttal_complete ?? false,
+      respondentRebuttalComplete: detail.respondent_rebuttal_complete ?? false,
       judgeAgentId: detail.judge_agent_id,
     }
     cases.value = { ...cases.value, [caseId]: caseData }
@@ -438,21 +487,21 @@ export function useCaseStore() {
         issue: preview.issue,
         status: preview.status as CaseStatus,
         createdAt: preview.created_at,
-        plaintiffId: '',
-        defendantId: undefined,
+        claimantId: '',
+        respondentId: undefined,
         inviteToken,
         opponentIdentifier: undefined,
         senderName: preview.sender_name ?? undefined,
         senderJobs: preview.sender_jobs ?? undefined,
         senderAddress: preview.sender_address ?? undefined,
-        plaintiffEvidence: [],
-        defendantEvidence: [],
-        plaintiffEvidenceComplete: false,
-        defendantEvidenceComplete: false,
-        plaintiffRebuttals: {},
-        defendantRebuttals: {},
-        plaintiffRebuttalComplete: false,
-        defendantRebuttalComplete: false,
+        claimantEvidence: [],
+        respondentEvidence: [],
+        claimantEvidenceComplete: false,
+        respondentEvidenceComplete: false,
+        claimantRebuttals: {},
+        respondentRebuttals: {},
+        claimantRebuttalComplete: false,
+        respondentRebuttalComplete: false,
       }
       cases.value = { ...cases.value, [caseId]: caseData }
       return caseData
@@ -478,20 +527,20 @@ export function useCaseStore() {
       if (file) form.file = file
       const res = await api.addEvidence(caseId, form)
       const mapped = mapEvidenceResponseToEvidence(res, evidence.submittedBy)
-      if (evidence.submittedBy === 'plaintiff') {
-        updateCase(caseId, { plaintiffEvidence: [...c.plaintiffEvidence, mapped] })
+      if (evidence.submittedBy === 'claimant') {
+        updateCase(caseId, { claimantEvidence: [...c.claimantEvidence, mapped] })
       } else {
-        updateCase(caseId, { defendantEvidence: [...c.defendantEvidence, mapped] })
+        updateCase(caseId, { respondentEvidence: [...c.respondentEvidence, mapped] })
       }
       return
     }
-    if (evidence.submittedBy === 'plaintiff') {
+    if (evidence.submittedBy === 'claimant') {
       updateCase(caseId, {
-        plaintiffEvidence: [...c.plaintiffEvidence, evidence],
+        claimantEvidence: [...c.claimantEvidence, evidence],
       })
     } else {
       updateCase(caseId, {
-        defendantEvidence: [...c.defendantEvidence, evidence],
+        respondentEvidence: [...c.respondentEvidence, evidence],
       })
     }
   }
@@ -499,13 +548,13 @@ export function useCaseStore() {
   function removeEvidence(caseId: string, submittedBy: EvidenceSubmittedBy, evidenceId: string) {
     const c = cases.value[caseId]
     if (!c) return
-    if (submittedBy === 'plaintiff') {
+    if (submittedBy === 'claimant') {
       updateCase(caseId, {
-        plaintiffEvidence: c.plaintiffEvidence.filter((e) => e.id !== evidenceId),
+        claimantEvidence: c.claimantEvidence.filter((e) => e.id !== evidenceId),
       })
     } else {
       updateCase(caseId, {
-        defendantEvidence: c.defendantEvidence.filter((e) => e.id !== evidenceId),
+        respondentEvidence: c.respondentEvidence.filter((e) => e.id !== evidenceId),
       })
     }
   }
@@ -522,13 +571,13 @@ export function useCaseStore() {
       await fetchCaseFromApi(caseId)
       return
     }
-    if (submittedBy === 'plaintiff') {
-      updateCase(caseId, { plaintiffEvidenceComplete: true })
+    if (submittedBy === 'claimant') {
+      updateCase(caseId, { claimantEvidenceComplete: true })
     } else {
-      updateCase(caseId, { defendantEvidenceComplete: true })
+      updateCase(caseId, { respondentEvidenceComplete: true })
     }
     const next = cases.value[caseId]
-    if (next?.plaintiffEvidenceComplete && next?.defendantEvidenceComplete) {
+    if (next?.claimantEvidenceComplete && next?.respondentEvidenceComplete) {
       updateCase(caseId, { status: 'rebutting' })
     }
   }
@@ -548,13 +597,13 @@ export function useCaseStore() {
         rebuttal: rebuttal.rebuttal ?? null,
       })
     }
-    if (submittedBy === 'plaintiff') {
+    if (submittedBy === 'claimant') {
       updateCase(caseId, {
-        plaintiffRebuttals: { ...c.plaintiffRebuttals, [evidenceId]: rebuttal },
+        claimantRebuttals: { ...c.claimantRebuttals, [evidenceId]: rebuttal },
       })
     } else {
       updateCase(caseId, {
-        defendantRebuttals: { ...c.defendantRebuttals, [evidenceId]: rebuttal },
+        respondentRebuttals: { ...c.respondentRebuttals, [evidenceId]: rebuttal },
       })
     }
   }
@@ -571,13 +620,13 @@ export function useCaseStore() {
       await fetchCaseFromApi(caseId)
       return
     }
-    if (submittedBy === 'plaintiff') {
-      updateCase(caseId, { plaintiffRebuttalComplete: true })
+    if (submittedBy === 'claimant') {
+      updateCase(caseId, { claimantRebuttalComplete: true })
     } else {
-      updateCase(caseId, { defendantRebuttalComplete: true })
+      updateCase(caseId, { respondentRebuttalComplete: true })
     }
     const next = cases.value[caseId]
-    if (next?.plaintiffRebuttalComplete && next?.defendantRebuttalComplete) {
+    if (next?.claimantRebuttalComplete && next?.respondentRebuttalComplete) {
       updateCase(caseId, { status: 'judging' })
     }
   }

@@ -40,7 +40,7 @@
         <template v-if="routeStatus === 'active'">
           <div class="border-2 border-ink rounded-lg p-4 flex flex-col gap-3">
             <h2 class="font-ui font-semibold text-sm m-0">
-              {{ myRole === 'plaintiff' ? '원고' : '피고' }} 증거 (나)
+              {{ myRole === 'claimant' ? '청구인' : '피청구인' }} 증거 (나)
             </h2>
             <template v-if="myEvidenceComplete">
               <ul class="list-none m-0 p-0 flex flex-col gap-2">
@@ -148,7 +148,7 @@
           </div>
           <div class="border-2 border-ink rounded-lg p-4">
             <h2 class="font-ui font-semibold text-sm m-0">
-              {{ myRole === 'plaintiff' ? '피고' : '원고' }} 제출 여부
+              {{ myRole === 'claimant' ? '피청구인' : '청구인' }} 제출 여부
             </h2>
             <p class="m-0 text-sm text-ink/80 mt-2">
               {{ otherEvidenceComplete ? '상대방 제출 완료' : (myEvidenceComplete ? '상대를 기다리고 있습니다.' : '상대방 제출 대기 중') }}
@@ -333,11 +333,11 @@ watch(
   { immediate: true },
 )
 
-type Role = 'plaintiff' | 'defendant' | null
+type Role = 'claimant' | 'respondent' | null
 const myRole = computed<Role>(() => {
   if (!caseData.value || !user.value?.id) return null
-  if (caseData.value.plaintiffId === user.value.id) return 'plaintiff'
-  if (caseData.value.defendantId === user.value.id) return 'defendant'
+  if (caseData.value.claimantId === user.value.id) return 'claimant'
+  if (caseData.value.respondentId === user.value.id) return 'respondent'
   return null
 })
 
@@ -356,44 +356,44 @@ const statusLabel = computed(() => {
 
 const myEvidenceList = computed(() => {
   if (!caseData.value || !myRole.value) return []
-  return myRole.value === 'plaintiff'
-    ? caseData.value.plaintiffEvidence
-    : caseData.value.defendantEvidence
+  return myRole.value === 'claimant'
+    ? caseData.value.claimantEvidence
+    : caseData.value.respondentEvidence
 })
 
 const myEvidenceComplete = computed(() => {
   if (!caseData.value || !myRole.value) return false
-  return myRole.value === 'plaintiff'
-    ? caseData.value.plaintiffEvidenceComplete
-    : caseData.value.defendantEvidenceComplete
+  return myRole.value === 'claimant'
+    ? caseData.value.claimantEvidenceComplete
+    : caseData.value.respondentEvidenceComplete
 })
 
 const otherEvidenceComplete = computed(() => {
   if (!caseData.value || !myRole.value) return false
-  return myRole.value === 'plaintiff'
-    ? caseData.value.defendantEvidenceComplete
-    : caseData.value.plaintiffEvidenceComplete
+  return myRole.value === 'claimant'
+    ? caseData.value.respondentEvidenceComplete
+    : caseData.value.claimantEvidenceComplete
 })
 
 const opponentEvidenceList = computed(() => {
   if (!caseData.value || !myRole.value) return []
-  return myRole.value === 'plaintiff'
-    ? caseData.value.defendantEvidence
-    : caseData.value.plaintiffEvidence
+  return myRole.value === 'claimant'
+    ? caseData.value.respondentEvidence
+    : caseData.value.claimantEvidence
 })
 
 const myRebuttalComplete = computed(() => {
   if (!caseData.value || !myRole.value) return false
-  return myRole.value === 'plaintiff'
-    ? caseData.value.plaintiffRebuttalComplete
-    : caseData.value.defendantRebuttalComplete
+  return myRole.value === 'claimant'
+    ? caseData.value.claimantRebuttalComplete
+    : caseData.value.respondentRebuttalComplete
 })
 
 const myRebuttals = computed(() => {
   if (!caseData.value || !myRole.value) return {}
-  return myRole.value === 'plaintiff'
-    ? caseData.value.plaintiffRebuttals
-    : caseData.value.defendantRebuttals
+  return myRole.value === 'claimant'
+    ? caseData.value.claimantRebuttals
+    : caseData.value.respondentRebuttals
 })
 
 const rebuttals = ref<Record<string, { accepted: boolean; rebuttal?: string }>>({})

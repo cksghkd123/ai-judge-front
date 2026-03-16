@@ -22,13 +22,13 @@
           </p>
         </section>
 
-        <!-- 2영역: 원고 증거 -->
+        <!-- 2영역: 청구인 증거 -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-paper">
-          <h2 class="font-ui font-semibold text-sm m-0 mb-2">원고 증거</h2>
-          <template v-if="caseData.plaintiffEvidence?.length">
+          <h2 class="font-ui font-semibold text-sm m-0 mb-2">청구인 증거</h2>
+          <template v-if="caseData.claimantEvidence?.length">
             <ul class="list-none m-0 p-0 flex flex-col gap-3">
               <li
-                v-for="e in caseData.plaintiffEvidence"
+                v-for="e in caseData.claimantEvidence"
                 :key="e.id"
                 class="border-2 border-ink rounded-lg p-3"
               >
@@ -40,7 +40,7 @@
                   <img
                     v-if="e.file_path"
                     :src="getEvidenceImageUrl(e.file_path)"
-                    alt="원고 첨부"
+                    alt="청구인 첨부"
                     class="max-w-full max-h-48 object-contain rounded border border-ink mt-1"
                   />
                   <p v-if="e.content" class="m-0 text-sm text-ink/80 mt-1">
@@ -53,13 +53,13 @@
           <p v-else class="m-0 text-ink/70 text-sm">(제출 증거 없음)</p>
         </section>
 
-        <!-- 3영역: 피고 증거 -->
+        <!-- 3영역: 피청구인 증거 -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-paper">
-          <h2 class="font-ui font-semibold text-sm m-0 mb-2">피고 증거</h2>
-          <template v-if="caseData.defendantEvidence?.length">
+          <h2 class="font-ui font-semibold text-sm m-0 mb-2">피청구인 증거</h2>
+          <template v-if="caseData.respondentEvidence?.length">
             <ul class="list-none m-0 p-0 flex flex-col gap-3">
               <li
-                v-for="e in caseData.defendantEvidence"
+                v-for="e in caseData.respondentEvidence"
                 :key="e.id"
                 class="border-2 border-ink rounded-lg p-3"
               >
@@ -71,7 +71,7 @@
                   <img
                     v-if="e.file_path"
                     :src="getEvidenceImageUrl(e.file_path)"
-                    alt="피고 첨부"
+                    alt="피청구인 첨부"
                     class="max-w-full max-h-48 object-contain rounded border border-ink mt-1"
                   />
                   <p v-if="e.content" class="m-0 text-sm text-ink/80 mt-1">
@@ -102,7 +102,7 @@
         >
           <h2 class="font-ui font-semibold text-sm m-0 mb-2 opacity-90">최종 과실</h2>
           <p class="font-heading font-extrabold text-2xl m-0 tracking-tight">
-            원고 {{ displayFaultRatio.plaintiff }} : 피고 {{ displayFaultRatio.defendant }}
+            청구인 {{ displayFaultRatio.claimant }} : 피청구인 {{ displayFaultRatio.respondent }}
           </p>
         </section>
 
@@ -187,11 +187,11 @@ const verdictText = computed(() => {
   return caseData.value?.verdictText ?? null
 })
 
-const displayFaultRatio = computed<{ plaintiff: number; defendant: number } | null>(() => {
+const displayFaultRatio = computed<{ claimant: number; respondent: number } | null>(() => {
   if (isApiMode() && caseResults.value) {
-    const c = caseResults.value.fault_ratio_creator
-    const p = caseResults.value.fault_ratio_counterparty
-    if (c != null && p != null) return { plaintiff: c, defendant: p }
+    const claimant = caseResults.value.fault_ratio_claimant
+    const respondent = caseResults.value.fault_ratio_respondent
+    if (claimant != null && respondent != null) return { claimant, respondent }
     return null
   }
   return caseData.value?.faultRatio ?? null

@@ -16,7 +16,7 @@ export interface CreateCaseResponse {
   description: string
   issue: string
   status: string
-  created_by: string
+  claimant_id: string
   created_at: string
   invite_token: string
   judge_agent_id: string
@@ -39,7 +39,7 @@ export interface CaseListItem {
   title: string
   status: string
   created_at: string
-  my_role: 'creator' | 'counterparty'
+  my_role: 'claimant' | 'respondent'
 }
 
 export interface CaseDetailResponse {
@@ -48,18 +48,18 @@ export interface CaseDetailResponse {
   description: string
   issue: string
   status: string
-  created_by: string
-  counterpart_id: string | null
-  my_role: 'creator' | 'counterparty'
+  claimant_id: string
+  respondent_id: string | null
+  my_role: 'claimant' | 'respondent'
   created_at: string
   invite_token: string
   sender_name?: string
   sender_jobs?: string | null
   sender_address?: string | null
-  creator_evidence_complete: boolean
-  counterparty_evidence_complete: boolean
-  creator_rebuttal_complete?: boolean
-  counterparty_rebuttal_complete?: boolean
+  claimant_evidence_complete: boolean
+  respondent_evidence_complete: boolean
+  claimant_rebuttal_complete?: boolean
+  respondent_rebuttal_complete?: boolean
   judge_agent_id?: string
 }
 
@@ -81,8 +81,8 @@ export interface RebuttalResponse {
 export interface CaseResultsResponse {
   case_id: string
   judgment_content: string | null
-  fault_ratio_creator: number | null
-  fault_ratio_counterparty: number | null
+  fault_ratio_claimant: number | null
+  fault_ratio_respondent: number | null
   judged_at: string | null
   status: string
 }
@@ -220,7 +220,7 @@ export function useCaseApi() {
     return request<EvidenceResponse[]>('GET', `${PREFIX}/case/${caseId}/my-evidences`)
   }
 
-  async function listCounterpartEvidence(caseId: string): Promise<EvidenceResponse[]> {
+  async function listCounterpartyEvidence(caseId: string): Promise<EvidenceResponse[]> {
     return request<EvidenceResponse[]>('GET', `${PREFIX}/case/${caseId}/counterpart-evidences`)
   }
 
@@ -271,7 +271,7 @@ export function useCaseApi() {
     addEvidence,
     completeEvidence,
     listMyEvidence,
-    listCounterpartEvidence,
+    listCounterpartyEvidence,
     rebutEvidence,
     completeRebuttal,
     getCaseResults,

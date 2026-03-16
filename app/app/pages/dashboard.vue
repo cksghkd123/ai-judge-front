@@ -90,7 +90,7 @@ const myCases = computed(() => {
   const uid = user.value?.id
   if (!uid) return []
   return Object.values(cases.value)
-    .filter((c) => c.plaintiffId === uid || c.defendantId === uid)
+    .filter((c) => c.claimantId === uid || c.respondentId === uid)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 })
 
@@ -120,11 +120,11 @@ function caseStatusLabel(status: string): string {
 }
 
 function roleLabel(c: CaseData | CaseListItemApi): string {
-  if ('my_role' in c) return c.my_role === 'creator' ? '원고' : '피고'
+  if ('my_role' in c) return c.my_role === 'claimant' ? '청구인' : '피청구인'
   const uid = user.value?.id
   if (!uid) return ''
-  if (c.plaintiffId === uid) return '원고'
-  if (c.defendantId === uid) return '피고'
+  if (c.claimantId === uid) return '청구인'
+  if (c.respondentId === uid) return '피청구인'
   return ''
 }
 
