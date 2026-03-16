@@ -1,21 +1,24 @@
 <template>
   <main class="min-h-screen flex flex-col items-center p-6 bg-paper text-ink font-body">
-    <section class="w-full max-w-md flex flex-col gap-5 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard">
+    <section
+      class="w-full max-w-md flex flex-col gap-5 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard"
+    >
       <h1 class="font-doodle text-2xl font-bold tracking-tight m-0">내용증명 작성</h1>
       <p class="m-0 text-ink/80 text-sm">
-        상대에게 전달할 내용증명을 작성해 주세요. 제목, 설명, 논점을 적으면 이후 상대에게 공유 링크를 보낼 수 있어요.
+        상대에게 전달할 내용증명을 작성해 주세요. <br />
+        제목, 설명, 논점을 적고 상대에게 공유 링크를 보낼 수 있어요.
       </p>
 
       <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
         <div class="flex flex-col gap-1">
-          <label for="title" class="font-ui text-sm font-semibold">제목 (한 줄 요약)</label>
+          <label for="title" class="font-ui text-sm font-semibold">사건 제목</label>
           <input
             id="title"
             v-model="form.title"
             type="text"
             required
             class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 focus:border-ink outline-none transition duration-150"
-            placeholder="예: 차량 접촉 사고 과실 논란"
+            placeholder="예: 시간 약속 무시 사건"
           />
         </div>
         <div class="flex flex-col gap-1">
@@ -26,7 +29,7 @@
             required
             rows="5"
             class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 focus:border-ink outline-none resize-y transition duration-150"
-            placeholder="내용증명에 담을 설명을 구체적으로 적어주세요."
+            placeholder="내용증명에 담을 상황 설명을 적어주세요."
           />
         </div>
         <div class="flex flex-col gap-1">
@@ -37,25 +40,45 @@
             type="text"
             required
             class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 focus:border-ink outline-none transition duration-150"
-            placeholder="예: 접촉 사고 시 과실 비율"
+            placeholder="예: 약속에 늦을만 했는가"
           />
         </div>
-        <div v-if="agents.length > 0" class="flex flex-col gap-1">
-          <label for="judge-agent" class="font-ui text-sm font-semibold">판사 선택</label>
-          <select
-            id="judge-agent"
-            v-model="form.judgeAgentId"
-            class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 focus:border-ink outline-none transition duration-150"
-          >
-            <option
-              v-for="a in agents"
-              :key="a.id"
-              :value="a.id"
+        <div v-if="agents.length > 0" class="flex flex-col gap-2">
+          <p class="font-ui text-sm font-semibold m-0">판사 선택</p>
+          <div class="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              class="border-2 border-ink rounded-full w-8 h-8 flex items-center justify-center bg-paper shadow-hard transition duration-150 ease-out hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              :disabled="agents.length <= 1"
+              @click="prevJudge"
             >
-              {{ a.name }}
-            </option>
-          </select>
-          <p class="m-0 text-ink/60 text-xs">이 사건을 맡을 AI 판사를 선택해 주세요.</p>
+              ‹
+            </button>
+            <div v-if="currentJudge" class="flex-1 flex flex-col items-center">
+              <div
+                class="w-64 h-64 rounded-full border-2 overflow-hidden flex items-center justify-center shrink-0 bg-ink/5"
+              >
+                <img
+                  v-if="currentJudge.judge_image"
+                  :src="currentJudge.judge_image"
+                  :alt="currentJudge.name"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else class="font-doodle text-2xl text-ink/80" aria-hidden="true">⚖</span>
+              </div>
+              <span class="font-doodle block text-base leading-tight mt-2">
+                {{ currentJudge.name }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="border-2 border-ink rounded-full w-8 h-8 flex items-center justify-center bg-paper shadow-hard transition duration-150 ease-out hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              :disabled="agents.length <= 1"
+              @click="nextJudge"
+            >
+              ›
+            </button>
+          </div>
         </div>
         <button
           type="submit"
@@ -84,15 +107,25 @@ const form = reactive({
   judgeAgentId: 'default' as string,
 })
 
-const agents = ref<Array<{ id: string; name: string }>>([])
+const agents = ref<Array<{ id: string; name: string; judge_image?: string }>>([])
 const submitting = ref(false)
+
+const currentJudgeIndex = computed(() => {
+  if (!agents.value.length) return -1
+  const idx = agents.value.findIndex((a) => a.id === form.judgeAgentId)
+  return idx >= 0 ? idx : 0
+})
+
+const currentJudge = computed(() =>
+  currentJudgeIndex.value >= 0 ? agents.value[currentJudgeIndex.value] : null,
+)
 
 onMounted(async () => {
   if (isApiMode()) {
     try {
       agents.value = await getJudgeAgents()
       const first = agents.value[0]
-      if (first && !form.judgeAgentId) {
+      if (first) {
         form.judgeAgentId = first.id
       }
     } catch {
@@ -100,6 +133,24 @@ onMounted(async () => {
     }
   }
 })
+
+const nextJudge = () => {
+  if (!agents.value.length) return
+  const idx = currentJudgeIndex.value
+  const next = (idx + 1) % agents.value.length
+  const target = agents.value[next]
+  if (!target) return
+  form.judgeAgentId = target.id
+}
+
+const prevJudge = () => {
+  if (!agents.value.length) return
+  const idx = currentJudgeIndex.value
+  const prev = (idx - 1 + agents.value.length) % agents.value.length
+  const target = agents.value[prev]
+  if (!target) return
+  form.judgeAgentId = target.id
+}
 
 const onSubmit = async () => {
   const uid = user.value?.id
@@ -111,7 +162,7 @@ const onSubmit = async () => {
       complaintSummary: form.complaintSummary,
       issue: form.issue.trim() || '논점 미기재',
       plaintiffId: uid,
-      judgeAgentId: isApiMode() ? (form.judgeAgentId || undefined) : undefined,
+      judgeAgentId: isApiMode() ? form.judgeAgentId || undefined : undefined,
     })
     router.push(`/case/${caseData.id}/invite`)
   } finally {

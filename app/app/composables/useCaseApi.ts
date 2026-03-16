@@ -25,6 +25,8 @@ export interface CreateCaseResponse {
 export interface JudgeAgent {
   id: string
   name: string
+  /** 판사 이미지 URL (카로셀 등 표시용) */
+  judge_image?: string
 }
 
 export interface JoinCaseRequest {
@@ -147,7 +149,11 @@ export function useCaseApi() {
 
   async function getJudgeAgents(): Promise<JudgeAgent[]> {
     const list = await request<Array<Record<string, string>>>('GET', `${PREFIX}/agents`)
-    return list.map((item) => ({ id: item.id ?? '', name: item.name ?? item.id ?? '' }))
+    return list.map((item) => ({
+      id: item.id ?? '',
+      name: item.name ?? item.id ?? '',
+      judge_image: item.judge_image || undefined,
+    }))
   }
 
   async function createCase(body: CreateCaseRequest): Promise<CreateCaseResponse> {
