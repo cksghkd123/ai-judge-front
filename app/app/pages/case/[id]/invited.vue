@@ -61,7 +61,7 @@
                   </div>
                   <div v-if="caseData.claimantJobs" class="flex gap-2">
                     <dt class="font-ui font-semibold w-14 text-ink/70">직업</dt>
-                    <dd class="m-0 flex-1">{{ caseData.claimantJobs }}</dd>
+                    <dd class="m-0 flex-1">{{ displayClaimantJobs(caseData.claimantJobs) }}</dd>
                   </div>
                   <div v-if="caseData.claimantAddress" class="flex gap-2">
                     <dt class="font-ui font-semibold w-14 text-ink/70">주소</dt>
@@ -141,6 +141,16 @@ const { user } = useAuth()
 
 const caseData = computed(() => getCase(caseId))
 const previewLoading = ref(false)
+
+/** 직업 문자열에서 [ ]·따옴표 제거 후 내용만 나열 */
+function displayClaimantJobs(jobs: string): string {
+  if (!jobs || typeof jobs !== 'string') return ''
+  return jobs
+    .replace(/^\[|\]$/g, '')
+    .replace(/['"]/g, '')
+    .replace(/\s*,\s*/g, ', ')
+    .trim()
+}
 
 onMounted(async () => {
   if (isApiMode() && token.value && !caseData.value) {

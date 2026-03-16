@@ -5,10 +5,18 @@
         {{ user?.user_metadata?.full_name ?? user?.email ?? '사용자' }}님, 환영해요.
       </p>
 
+      <!-- 내용증명 보내기 -->
+      <NuxtLink
+        to="/complaint/new"
+        class="block w-full border-2 border-ink rounded-lg px-4 py-3 font-ui font-semibold text-paper bg-primary text-center no-underline transition duration-150 ease-out hover:-translate-y-0.5 hover:opacity-90 shadow-hard"
+      >
+        내용증명 보내기
+      </NuxtLink>
+
       <!-- 진행 중인 사건 -->
       <section class="flex flex-col gap-2">
         <h2 class="font-ui font-semibold text-sm m-0 text-ink/80">진행 중인 사건</h2>
-        <div v-if="ongoingCases.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div v-if="ongoingCases.length > 0" class="flex flex-col gap-3">
           <NuxtLink
             v-for="c in ongoingCases"
             :key="c.id"
@@ -29,7 +37,7 @@
       <!-- 완료된 사건 -->
       <section class="flex flex-col gap-2">
         <h2 class="font-ui font-semibold text-sm m-0 text-ink/80">완료된 사건</h2>
-        <div v-if="completedCases.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div v-if="completedCases.length > 0" class="flex flex-col gap-3">
           <NuxtLink
             v-for="c in completedCases"
             :key="c.id"
@@ -47,25 +55,17 @@
         <p v-else class="m-0 text-sm text-ink/50">완료된 사건이 없어요.</p>
       </section>
 
-      <!-- 내용증명 보내기 -->
-      <NuxtLink
-        to="/complaint/new"
-        class="block w-full border-2 border-ink rounded-lg px-4 py-3 font-ui font-semibold text-ink bg-paper text-center no-underline transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/5"
-      >
-        내용증명 보내기
-      </NuxtLink>
-
       <!-- 하단: 내 정보, 로그아웃 -->
       <div class="flex flex-col gap-2 mt-4 pt-4 border-t-2 border-ink/20">
         <NuxtLink
           to="/profile"
-          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold text-ink bg-paper text-center no-underline transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/5"
+          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold text-ink bg-accent/30 text-center no-underline transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-accent/50"
         >
           내 정보
         </NuxtLink>
         <button
           type="button"
-          class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold text-ink bg-paper transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/10 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+          class="border-2 border-ink/60 rounded-lg px-4 py-2 font-ui font-semibold text-ink bg-ink/5 transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-ink/10 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
           :disabled="loggingOut"
           @click="handleSignOut"
         >
