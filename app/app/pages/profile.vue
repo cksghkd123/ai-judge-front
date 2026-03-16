@@ -284,6 +284,7 @@ definePageMeta({ middleware: 'auth' })
 const { user, signOut } = useAuth()
 const supabase = useNuxtApp().$supabase
 const router = useRouter()
+const { deleteMe } = useAuthApi()
 
 const displayName = computed(
   () => (user.value?.user_metadata?.full_name as string) || user.value?.email || '',
@@ -426,14 +427,26 @@ async function handleSignOut() {
   }
 }
 
-function confirmWithdraw() {
+async function confirmWithdraw() {
   withdrawing.value = true
-  // 실제 삭제는 Edge Function/백엔드 연동 시 해당 엔드포인트 호출
-  setTimeout(() => {
+  profileMessage.value = ''
+  profileError.value = false
+  try {
+    await deleteMe()
+    await signOut()
+    await router.replace('/')
+  } catch (e: unknown) {
+    const msg =
+      e &&
+      typeof e === 'object' &&
+      'data' in e &&
+      (e as { data?: { message?: string } }).data?.message
+    profileMessage.value =
+      typeof msg === 'string' && msg.trim() ? msg : '탈퇴 처리에 실패했어요. 잠시 후 다시 시도해 주세요.'
+    profileError.value = true
+  } finally {
     withdrawing.value = false
     showWithdrawModal.value = false
-    profileMessage.value = '탈퇴 기능은 백엔드 연동 후 사용할 수 있어요.'
-    profileError.value = true
-  }, 500)
+  }
 }
 </script>
