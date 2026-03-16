@@ -33,6 +33,9 @@ export interface CaseData {
   defendantId?: string
   inviteToken: string
   opponentIdentifier?: string
+  senderName?: string
+  senderJobs?: string
+  senderAddress?: string
   plaintiffEvidence: Evidence[]
   defendantEvidence: Evidence[]
   plaintiffEvidenceComplete: boolean
@@ -357,6 +360,10 @@ export function useCaseStore() {
         plaintiffId: detail.created_by,
         defendantId: detail.counterpart_id ?? undefined,
         inviteToken: detail.invite_token,
+        opponentIdentifier: undefined,
+        senderName: detail.sender_name ?? undefined,
+        senderJobs: detail.sender_jobs ?? undefined,
+        senderAddress: detail.sender_address ?? undefined,
         plaintiffEvidence: [],
         defendantEvidence: [],
         plaintiffEvidenceComplete: false,
@@ -397,6 +404,10 @@ export function useCaseStore() {
       plaintiffId,
       defendantId,
       inviteToken: detail.invite_token,
+      opponentIdentifier: undefined,
+      senderName: detail.sender_name ?? undefined,
+      senderJobs: detail.sender_jobs ?? undefined,
+      senderAddress: detail.sender_address ?? undefined,
       plaintiffEvidence,
       defendantEvidence,
       plaintiffEvidenceComplete: detail.creator_evidence_complete,
@@ -430,6 +441,10 @@ export function useCaseStore() {
         plaintiffId: '',
         defendantId: undefined,
         inviteToken,
+        opponentIdentifier: undefined,
+        senderName: preview.sender_name ?? undefined,
+        senderJobs: preview.sender_jobs ?? undefined,
+        senderAddress: preview.sender_address ?? undefined,
         plaintiffEvidence: [],
         defendantEvidence: [],
         plaintiffEvidenceComplete: false,

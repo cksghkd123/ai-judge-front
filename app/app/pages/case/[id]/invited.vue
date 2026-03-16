@@ -19,7 +19,7 @@
       >
         <h1 class="font-heading font-extrabold tracking-tight text-xl m-0">내용증명서</h1>
         <p class="m-0 text-ink/80">상대방이 보낸 내용증명입니다. 참여하시겠어요?</p>
-        <div class="border-2 border-ink rounded-lg p-4 bg-paper">
+        <div class="border-2 border-ink rounded-lg p-4 bg-paper flex flex-col gap-3">
           <p class="text-sm font-ui font-semibold m-0 mb-2 text-ink/70">내용증명 요약</p>
           <template v-if="previewLoading">
             <p class="m-0 text-ink/60 text-sm">불러오는 중...</p>
@@ -30,6 +30,30 @@
               {{ caseData.complaintSummary }}
             </p>
             <p class="text-sm text-ink/60 m-0 mt-2">논점: {{ caseData.issue }}</p>
+            <div
+              v-if="caseData.senderName || caseData.senderJobs || caseData.senderAddress"
+              class="mt-3 border-2 border-dashed border-ink/50 rounded-lg p-3 bg-accent/20"
+            >
+              <p class="m-0 text-xs font-ui font-semibold text-ink/80">
+                보낸이 인적사항
+              </p>
+              <dl class="m-0 mt-2 space-y-1 text-sm">
+                <div v-if="caseData.senderName" class="flex gap-2">
+                  <dt class="font-ui font-semibold w-14 text-ink/70">이름</dt>
+                  <dd class="m-0 flex-1">{{ caseData.senderName }}</dd>
+                </div>
+                <div v-if="caseData.senderJobs" class="flex gap-2">
+                  <dt class="font-ui font-semibold w-14 text-ink/70">직업</dt>
+                  <dd class="m-0 flex-1">{{ caseData.senderJobs }}</dd>
+                </div>
+                <div v-if="caseData.senderAddress" class="flex gap-2">
+                  <dt class="font-ui font-semibold w-14 text-ink/70">주소</dt>
+                  <dd class="m-0 flex-1 whitespace-pre-wrap">
+                    {{ caseData.senderAddress }}
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </template>
           <template v-else>
             <p class="m-0 text-sm text-ink/60">

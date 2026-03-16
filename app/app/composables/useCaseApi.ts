@@ -53,6 +53,9 @@ export interface CaseDetailResponse {
   my_role: 'creator' | 'counterparty'
   created_at: string
   invite_token: string
+  sender_name?: string
+  sender_jobs?: string | null
+  sender_address?: string | null
   creator_evidence_complete: boolean
   counterparty_evidence_complete: boolean
   creator_rebuttal_complete?: boolean
@@ -92,6 +95,9 @@ export interface CasePreviewResponse {
   issue: string
   status: string
   created_at: string
+  sender_name?: string
+  sender_jobs?: string | null
+  sender_address?: string | null
 }
 
 export interface EvidenceResponse {
