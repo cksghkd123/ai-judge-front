@@ -28,11 +28,17 @@
           <template v-if="caseData.claimantEvidence?.length">
             <ul class="list-none m-0 p-0 flex flex-col gap-3">
               <li
-                v-for="e in caseData.claimantEvidence"
+                v-for="(e, idx) in caseData.claimantEvidence"
                 :key="e.id"
-                class="border-2 border-ink rounded-lg p-3"
+                class="border-2 border-ink rounded-lg p-4 shadow-hard bg-paper"
               >
-                <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
+                <div class="flex items-center justify-between gap-3">
+                  <span
+                    class="inline-flex items-center border-2 border-ink rounded-lg px-2 py-1 font-ui text-xs bg-accent shadow-hard"
+                  >
+                    증거 {{ idx + 1 }}
+                  </span>
+                </div>
                 <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">
                   {{ e.content }}
                 </p>
@@ -47,13 +53,22 @@
                     {{ e.content }}
                   </p>
                 </template>
-                <div v-if="rebuttalByEvidenceId[e.id]" class="mt-2 pt-2 border-t border-ink/30">
-                  <p class="m-0 font-ui text-xs font-semibold text-ink/80">피청구인의 반박</p>
-                  <p class="m-0 text-sm mt-1">
-                    {{ rebuttalByEvidenceId[e.id]?.accepted ? '인정' : '불인정' }}
-                    <template v-if="rebuttalByEvidenceId[e.id]?.rebuttal">
-                      — {{ rebuttalByEvidenceId[e.id]?.rebuttal }}
-                    </template>
+                <div v-if="rebuttalByEvidenceId[e.id]" class="mt-3 pt-3 border-t-2 border-ink/30">
+                  <div class="w-full flex items-center justify-end gap-3">
+                    <span
+                      class="inline-flex items-center border-2 border-ink rounded-lg px-2 py-0.5 font-ui text-xs shadow-hard"
+                      :class="
+                        rebuttalByEvidenceId[e.id]?.accepted ? 'bg-accent' : 'bg-primary text-paper'
+                      "
+                    >
+                      {{ rebuttalByEvidenceId[e.id]?.accepted ? '인정' : '불인정' }}
+                    </span>
+                  </div>
+                  <p
+                    v-if="rebuttalByEvidenceId[e.id]?.rebuttal"
+                    class="m-0 text-sm mt-2 whitespace-pre-wrap text-right"
+                  >
+                    {{ rebuttalByEvidenceId[e.id]?.rebuttal }}
                   </p>
                 </div>
               </li>
@@ -68,11 +83,17 @@
           <template v-if="caseData.respondentEvidence?.length">
             <ul class="list-none m-0 p-0 flex flex-col gap-3">
               <li
-                v-for="e in caseData.respondentEvidence"
+                v-for="(e, idx) in caseData.respondentEvidence"
                 :key="e.id"
-                class="border-2 border-ink rounded-lg p-3"
+                class="border-2 border-ink rounded-lg p-4 shadow-hard bg-paper"
               >
-                <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
+                <div class="flex items-center justify-between gap-3">
+                  <span
+                    class="inline-flex items-center border-2 border-ink rounded-lg px-2 py-1 font-ui text-xs bg-accent shadow-hard"
+                  >
+                    증거 {{ idx + 1 + (caseData.claimantEvidence?.length ?? 0) }}
+                  </span>
+                </div>
                 <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap mt-1">
                   {{ e.content }}
                 </p>
@@ -87,13 +108,22 @@
                     {{ e.content }}
                   </p>
                 </template>
-                <div v-if="rebuttalByEvidenceId[e.id]" class="mt-2 pt-2 border-t border-ink/30">
-                  <p class="m-0 font-ui text-xs font-semibold text-ink/80">청구인의 반박</p>
-                  <p class="m-0 text-sm mt-1">
-                    {{ rebuttalByEvidenceId[e.id]?.accepted ? '인정' : '불인정' }}
-                    <template v-if="rebuttalByEvidenceId[e.id]?.rebuttal">
-                      — {{ rebuttalByEvidenceId[e.id]?.rebuttal }}
-                    </template>
+                <div v-if="rebuttalByEvidenceId[e.id]" class="mt-3 pt-3 border-t-2 border-ink/30">
+                  <div class="w-full flex items-center justify-end gap-3">
+                    <span
+                      class="inline-flex items-center border-2 border-ink rounded-lg px-2 py-0.5 font-ui text-xs shadow-hard"
+                      :class="
+                        rebuttalByEvidenceId[e.id]?.accepted ? 'bg-accent' : 'bg-primary text-paper'
+                      "
+                    >
+                      {{ rebuttalByEvidenceId[e.id]?.accepted ? '인정' : '불인정' }}
+                    </span>
+                  </div>
+                  <p
+                    v-if="rebuttalByEvidenceId[e.id]?.rebuttal"
+                    class="m-0 text-sm mt-2 whitespace-pre-wrap text-right"
+                  >
+                    {{ rebuttalByEvidenceId[e.id]?.rebuttal }}
                   </p>
                 </div>
               </li>
@@ -312,7 +342,7 @@ function evidenceTypeLabel(type: string): string {
 .verdict-markdown :deep(h3) {
   margin-top: 1rem;
   margin-bottom: 0.5rem;
-  font-family: "Nanum Myeongjo", serif;
+  font-family: 'Nanum Myeongjo', serif;
   font-weight: 800;
   letter-spacing: -0.015em;
 }
