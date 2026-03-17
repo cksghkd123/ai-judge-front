@@ -18,11 +18,11 @@
         class="w-full max-w-lg flex flex-col gap-5 border-4 border-ink bg-paper p-6 rounded-lg shadow-hard"
       >
         <h1 class="font-heading font-extrabold tracking-tight text-xl m-0">{{ caseData.title }}</h1>
-        <p class="m-0 text-sm text-ink/80">
-          <span class="font-doodle">상태</span> {{ statusLabel }}
-        </p>
         <p v-if="caseData.issue" class="m-0 text-sm text-ink/70">논점: {{ caseData.issue }}</p>
 
+        <p class="m-0 text-sm text-ink/80">
+          <span>{{ myRole === 'claimant' ? '청구인' : '피청구인' }} 증거 (나)</span>
+        </p>
         <!-- pending -->
         <div v-if="routeStatus === 'pending'" class="border-2 border-ink rounded-lg p-4">
           <p class="m-0 text-ink/80">
@@ -38,122 +38,157 @@
 
         <!-- active -->
         <template v-if="routeStatus === 'active'">
-          <div class="border-2 border-ink rounded-lg p-4 flex flex-col gap-3">
-            <h2 class="font-ui font-semibold text-sm m-0">
-              {{ myRole === 'claimant' ? '청구인' : '피청구인' }} 증거 (나)
-            </h2>
-            <template v-if="myEvidenceComplete">
-              <ul class="list-none m-0 p-0 flex flex-col gap-2">
-                <li
-                  v-for="e in myEvidenceList"
-                  :key="e.id"
-                  class="border-2 border-ink rounded-lg p-3 flex flex-col gap-1"
+          <!-- 논점 밑: 제목만 노출 -->
+          <div class="border-2 border-ink rounded-lg p-4 bg-paper">
+            <div class="flex items-baseline justify-between gap-3">
+              <h2 class="font-ui font-semibold text-sm m-0">증거 추가</h2>
+              <p v-if="myEvidenceComplete" class="m-0 text-accent font-doodle text-sm">
+                내 쪽 제출 완료
+              </p>
+            </div>
+
+            <!-- 증거 추가 폼 (제출 완료 전만) -->
+            <div v-if="!myEvidenceComplete" class="mt-3 rounded-lg p-3 flex flex-col gap-2">
+              <!-- 타입 선택 (세그먼트) -->
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  class="border-2 border-ink rounded-lg px-3 py-2 font-ui text-sm shadow-hard transition duration-150 ease-out hover:-translate-y-1"
+                  :class="newEvidenceType === 'text' ? 'bg-accent' : 'bg-paper'"
+                  @click="setEvidenceType('text')"
                 >
-                  <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
-                  <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">
-                    {{ e.content }}
-                  </p>
-                  <template v-else>
-                    <img
-                      v-if="e.file_path"
-                      :src="getEvidenceImageUrl(e.file_path)"
-                      alt="첨부"
-                      class="max-w-full max-h-40 object-contain rounded border border-ink"
-                    />
-                    <p v-if="e.content" class="m-0 text-sm text-ink/80">{{ e.content }}</p>
-                  </template>
-                </li>
-              </ul>
-              <p class="m-0 text-accent font-doodle text-sm">내 쪽 제출 완료</p>
-            </template>
-            <template v-else>
-              <ul class="list-none m-0 p-0 flex flex-col gap-2">
-                <li
-                  v-for="e in myEvidenceList"
-                  :key="e.id"
-                  class="border-2 border-ink rounded-lg p-3 flex flex-col gap-1"
+                  텍스트
+                </button>
+                <button
+                  type="button"
+                  class="border-2 border-ink rounded-lg px-3 py-2 font-ui text-sm shadow-hard transition duration-150 ease-out hover:-translate-y-1"
+                  :class="newEvidenceType === 'chat' ? 'bg-accent' : 'bg-paper'"
+                  @click="setEvidenceType('chat')"
                 >
-                  <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
-                  <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">
-                    {{ e.content }}
-                  </p>
-                  <template v-else>
-                    <img
-                      v-if="e.file_path"
-                      :src="getEvidenceImageUrl(e.file_path)"
-                      alt="첨부"
-                      class="max-w-full max-h-40 object-contain rounded border border-ink"
-                    />
-                    <p v-if="e.content" class="m-0 text-sm text-ink/80">{{ e.content }}</p>
-                  </template>
-                  <button
-                    type="button"
-                    class="w-fit text-sm border border-ink rounded px-2 py-1 font-ui opacity-70 hover:opacity-100 transition duration-150"
-                    @click="removeEvidence(e.id)"
-                  >
-                    삭제
-                  </button>
-                </li>
-              </ul>
-              <div class="border-2 border-dashed border-ink rounded-lg p-3 flex flex-col gap-2">
-                <p class="m-0 font-ui text-sm font-semibold">증거 추가</p>
-                <select
-                  v-model="newEvidenceType"
-                  class="border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 outline-none"
+                  채팅 캡처
+                </button>
+                <button
+                  type="button"
+                  class="border-2 border-ink rounded-lg px-3 py-2 font-ui text-sm shadow-hard transition duration-150 ease-out hover:-translate-y-1"
+                  :class="newEvidenceType === 'photo' ? 'bg-accent' : 'bg-paper'"
+                  @click="setEvidenceType('photo')"
                 >
-                  <option value="text">텍스트</option>
-                  <option value="chat">채팅 캡처</option>
-                  <option value="photo">사진/캡처</option>
-                </select>
-                <template v-if="newEvidenceType === 'text'">
-                  <textarea
-                    v-model="newEvidenceContent"
-                    rows="3"
-                    class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 outline-none resize-y"
-                    placeholder="내용 입력"
-                  />
-                </template>
-                <template v-else>
+                  사진/캡처
+                </button>
+              </div>
+
+              <template v-if="newEvidenceType === 'text'">
+                <textarea
+                  v-model="newEvidenceContent"
+                  rows="4"
+                  class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 outline-none resize-y"
+                  placeholder="텍스트 증거를 적어주세요. (상황, 날짜, 핵심 주장 등)"
+                />
+                <p class="m-0 text-xs text-ink/60">{{ newEvidenceContent.trim().length }}자</p>
+              </template>
+
+              <template v-else>
+                <!-- 업로드 박스 -->
+                <label
+                  class="border-2 border-ink rounded-lg p-3 bg-paper shadow-hard cursor-pointer transition duration-150 ease-out hover:-translate-y-1"
+                  @dragover.prevent
+                  @drop.prevent="onEvidenceFileDrop"
+                >
                   <input
                     type="file"
                     accept="image/*"
-                    class="text-sm"
+                    class="hidden"
                     @change="onEvidenceFileSelect"
                   />
-                  <input
-                    v-model="newEvidenceDescription"
-                    type="text"
-                    class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 outline-none"
-                    placeholder="설명 (선택)"
-                  />
-                </template>
-                <button
-                  type="button"
-                  class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-blue-pen text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 w-fit disabled:opacity-60 disabled:transform-none"
-                  :disabled="!canAddEvidence"
-                  @click="addEvidence"
-                >
-                  추가
-                </button>
-              </div>
+                  <template v-if="newEvidencePreviewUrl">
+                    <img
+                      :src="newEvidencePreviewUrl"
+                      alt="선택한 이미지 미리보기"
+                      class="w-full max-h-48 object-contain rounded border border-ink bg-paper"
+                    />
+                    <div class="mt-2 flex items-center justify-between gap-2">
+                      <p class="m-0 text-xs text-ink/70 truncate">
+                        {{ newEvidenceFile?.name }}
+                      </p>
+                      <button
+                        type="button"
+                        class="border-2 border-ink rounded-lg px-2 py-1 font-ui text-xs bg-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 shrink-0"
+                        @click.prevent="clearEvidenceFile"
+                      >
+                        제거
+                      </button>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <p class="m-0 font-ui text-sm font-semibold">이미지 올리기</p>
+                    <p class="m-0 text-xs text-ink/70 mt-1">
+                      클릭해서 선택하거나, 여기로 드래그&드롭하세요.
+                    </p>
+                  </template>
+                </label>
+
+                <input
+                  v-model="newEvidenceDescription"
+                  type="text"
+                  class="w-full border-2 border-ink rounded-lg px-3 py-2 font-body focus:bg-accent/30 outline-none"
+                  :placeholder="
+                    newEvidenceType === 'chat' ? '채팅 캡처 설명 (선택)' : '사진 설명 (선택)'
+                  "
+                />
+              </template>
               <button
                 type="button"
-                class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 disabled:opacity-60 disabled:transform-none w-fit"
-                :disabled="myEvidenceList.length === 0 || submitting"
-                @click="submitEvidenceComplete"
+                class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-blue-pen text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 w-fit disabled:opacity-60 disabled:transform-none"
+                :disabled="!canAddEvidence"
+                @click="addEvidence"
               >
-                {{ submitting ? '처리 중...' : '내 쪽 제출 완료' }}
+                추가
               </button>
-            </template>
+            </div>
           </div>
-          <div class="border-2 border-ink rounded-lg p-4">
-            <h2 class="font-ui font-semibold text-sm m-0">
-              {{ myRole === 'claimant' ? '피청구인' : '청구인' }} 제출 여부
-            </h2>
-            <p class="m-0 text-sm text-ink/80 mt-2">
-              {{ otherEvidenceComplete ? '상대방 제출 완료' : (myEvidenceComplete ? '상대를 기다리고 있습니다.' : '상대방 제출 대기 중') }}
-            </p>
-          </div>
+
+          <!-- 증거 나열 -->
+          <ul v-if="myEvidenceList.length" class="list-none m-0 p-0 flex flex-col gap-2">
+            <li
+              v-for="e in myEvidenceList"
+              :key="e.id"
+              class="border-2 border-ink rounded-lg p-3 flex flex-col gap-1"
+            >
+              <span class="font-ui text-xs text-ink/70">{{ evidenceTypeLabel(e.type) }}</span>
+              <p v-if="e.type === 'text'" class="m-0 text-sm whitespace-pre-wrap">
+                {{ e.content }}
+              </p>
+              <template v-else>
+                <img
+                  v-if="e.file_path"
+                  :src="getEvidenceImageUrl(e.file_path)"
+                  alt="첨부"
+                  class="max-w-full max-h-40 object-contain rounded border border-ink"
+                />
+                <p v-if="e.content" class="m-0 text-sm text-ink/80">{{ e.content }}</p>
+              </template>
+              <button
+                v-if="!myEvidenceComplete"
+                type="button"
+                class="w-fit text-sm border border-ink rounded px-2 py-1 font-ui opacity-70 hover:opacity-100 transition duration-150"
+                @click="removeEvidence(e.id)"
+              >
+                삭제
+              </button>
+            </li>
+          </ul>
+          <p v-else class="m-0 text-sm text-ink/60">아직 추가한 증거가 없어요.</p>
+
+          <!-- 내 쪽 제출 완료 버튼: 대시보드 버튼 바로 위로 이동 -->
+          <button
+            v-if="!myEvidenceComplete"
+            type="button"
+            class="border-2 border-ink rounded-lg px-4 py-2 font-ui font-semibold bg-primary text-paper shadow-hard transition duration-150 ease-out hover:-translate-y-1 disabled:opacity-60 disabled:transform-none w-full"
+            :disabled="myEvidenceList.length === 0 || submitting"
+            @click="submitEvidenceComplete"
+          >
+            {{ submitting ? '처리 중...' : '내 쪽 제출 완료' }}
+          </button>
         </template>
 
         <!-- rebutting -->
@@ -341,19 +376,6 @@ const myRole = computed<Role>(() => {
   return null
 })
 
-const statusLabel = computed(() => {
-  const s = caseData.value?.status
-  if (!s) return ''
-  const map: Record<string, string> = {
-    pending: '상대 참여 대기',
-    active: '증거 제출 중',
-    rebutting: '반박 작성 중',
-    judging: '판결 중',
-    completed: '판결 완료',
-  }
-  return map[s] ?? s
-})
-
 const myEvidenceList = computed(() => {
   if (!caseData.value || !myRole.value) return []
   return myRole.value === 'claimant'
@@ -422,7 +444,28 @@ const newEvidenceType = ref<EvidenceType>('text')
 const newEvidenceContent = ref('')
 const newEvidenceDescription = ref('')
 const newEvidenceFile = ref<File | null>(null)
+const newEvidencePreviewUrl = ref<string>('')
 const submitting = ref(false)
+
+function setEvidenceType(next: EvidenceType) {
+  newEvidenceType.value = next
+  newEvidenceContent.value = ''
+  newEvidenceDescription.value = ''
+  clearEvidenceFile()
+}
+
+function setEvidenceFile(file: File) {
+  if (!file.type.startsWith('image/')) return
+  newEvidenceFile.value = file
+  if (newEvidencePreviewUrl.value) URL.revokeObjectURL(newEvidencePreviewUrl.value)
+  newEvidencePreviewUrl.value = URL.createObjectURL(file)
+}
+
+function clearEvidenceFile() {
+  if (newEvidencePreviewUrl.value) URL.revokeObjectURL(newEvidencePreviewUrl.value)
+  newEvidencePreviewUrl.value = ''
+  newEvidenceFile.value = null
+}
 
 const canAddEvidence = computed(() => {
   if (newEvidenceType.value === 'text') return newEvidenceContent.value.trim().length > 0
@@ -452,7 +495,7 @@ async function addEvidence() {
     await addEvidenceStore(caseId, evidence, file)
     newEvidenceContent.value = ''
     newEvidenceDescription.value = ''
-    newEvidenceFile.value = null
+    clearEvidenceFile()
   } finally {
     submitting.value = false
   }
@@ -467,8 +510,14 @@ function onEvidenceFileSelect(ev: Event) {
   const input = ev.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file || !file.type.startsWith('image/')) return
-  newEvidenceFile.value = file
+  setEvidenceFile(file)
   input.value = ''
+}
+
+function onEvidenceFileDrop(ev: DragEvent) {
+  const file = ev.dataTransfer?.files?.[0]
+  if (!file) return
+  setEvidenceFile(file)
 }
 
 async function submitEvidenceComplete() {
