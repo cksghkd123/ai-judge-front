@@ -117,9 +117,10 @@
             </div>
           </div>
           <h2 class="font-doodle text-2xl font-bold m-0 text-center">{{ judgeName }}의 판결</h2>
-          <p class="m-0 text-ink whitespace-pre-wrap leading-relaxed">
-            {{ verdictText || '(판결문 없음)' }}
-          </p>
+          <div
+            class="verdict-markdown mt-3 text-ink leading-relaxed"
+            v-html="verdictHtml || `<p>(판결문 없음)</p>`"
+          />
         </section>
 
         <!-- 5영역: 최종 과실 비율 (API: fault_ratio_creator/counterparty / 로컬: faultRatio) -->
@@ -158,6 +159,8 @@
 </template>
 
 <script setup lang="ts">
+import MarkdownIt from 'markdown-it'
+
 definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()
@@ -241,6 +244,18 @@ const verdictText = computed(() => {
   return caseData.value?.verdictText ?? null
 })
 
+const md = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true,
+})
+
+const verdictHtml = computed(() => {
+  const src = verdictText.value
+  if (!src) return ''
+  return md.render(src)
+})
+
 const displayFaultRatio = computed<{ claimant: number; respondent: number } | null>(() => {
   if (isApiMode() && caseResults.value) {
     const claimant = caseResults.value.fault_ratio_claimant
@@ -276,3 +291,49 @@ function evidenceTypeLabel(type: string): string {
   return map[type] ?? type
 }
 </script>
+
+<style scoped>
+.verdict-markdown :deep(p) {
+  margin: 0;
+}
+.verdict-markdown :deep(p + p) {
+  margin-top: 0.75rem;
+}
+.verdict-markdown :deep(ul),
+.verdict-markdown :deep(ol) {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+.verdict-markdown :deep(li) {
+  margin: 0.25rem 0;
+}
+.verdict-markdown :deep(h1),
+.verdict-markdown :deep(h2),
+.verdict-markdown :deep(h3) {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-family: "Nanum Myeongjo", serif;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+.verdict-markdown :deep(blockquote) {
+  margin: 0.75rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid rgba(24, 24, 27, 0.6);
+  color: rgba(24, 24, 27, 0.8);
+}
+.verdict-markdown :deep(code) {
+  padding: 0.125rem 0.25rem;
+  border: 1px solid rgba(24, 24, 27, 0.4);
+  border-radius: 0.25rem;
+  background: #fffdf5;
+}
+.verdict-markdown :deep(pre) {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border: 2px solid #18181b;
+  border-radius: 0.5rem;
+  background: #fffdf5;
+  overflow: auto;
+}
+</style>
