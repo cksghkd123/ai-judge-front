@@ -47,6 +47,15 @@
                     {{ e.content }}
                   </p>
                 </template>
+                <div v-if="rebuttalByEvidenceId[e.id]" class="mt-2 pt-2 border-t border-ink/30">
+                  <p class="m-0 font-ui text-xs font-semibold text-ink/80">피청구인의 반박</p>
+                  <p class="m-0 text-sm mt-1">
+                    {{ rebuttalByEvidenceId[e.id]?.accepted ? '인정' : '불인정' }}
+                    <template v-if="rebuttalByEvidenceId[e.id]?.rebuttal">
+                      — {{ rebuttalByEvidenceId[e.id]?.rebuttal }}
+                    </template>
+                  </p>
+                </div>
               </li>
             </ul>
           </template>
@@ -78,6 +87,15 @@
                     {{ e.content }}
                   </p>
                 </template>
+                <div v-if="rebuttalByEvidenceId[e.id]" class="mt-2 pt-2 border-t border-ink/30">
+                  <p class="m-0 font-ui text-xs font-semibold text-ink/80">청구인의 반박</p>
+                  <p class="m-0 text-sm mt-1">
+                    {{ rebuttalByEvidenceId[e.id]?.accepted ? '인정' : '불인정' }}
+                    <template v-if="rebuttalByEvidenceId[e.id]?.rebuttal">
+                      — {{ rebuttalByEvidenceId[e.id]?.rebuttal }}
+                    </template>
+                  </p>
+                </div>
               </li>
             </ul>
           </template>
@@ -136,7 +154,7 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const caseId = route.params.id as string
 const { getCase, isApiMode, fetchCaseFromApi } = useCaseStore()
-const { getEvidenceImageUrl, getCaseResults, getJudgeAgents } = useCaseApi()
+const { getEvidenceImageUrl, getCaseResults, getJudgeAgents, getCaseRebuttals } = useCaseApi()
 
 const caseData = computed(() => getCase(caseId))
 
@@ -170,6 +188,22 @@ const { data: caseResults } = await useAsyncData(
   },
   { server: false },
 )
+
+const { data: rebuttalsList } = await useAsyncData(
+  `verdict-rebuttals-${caseId}`,
+  async () => (isApiMode() ? getCaseRebuttals(caseId) : []),
+  { server: false },
+)
+
+/** evidence_id → 해당 증거에 대한 반박 (상대가 쓴 것) */
+const rebuttalByEvidenceId = computed(() => {
+  const list = rebuttalsList.value ?? []
+  const map: Record<string, { accepted: boolean; rebuttal: string | null }> = {}
+  for (const r of list) {
+    map[r.evidence_id] = { accepted: r.accepted, rebuttal: r.rebuttal }
+  }
+  return map
+})
 
 const canShowVerdict = computed(() => {
   if (!caseData.value) return false

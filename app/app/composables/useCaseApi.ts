@@ -260,6 +260,15 @@ export function useCaseApi() {
     return request<CaseResultsResponse>('GET', `${PREFIX}/case/${caseId}/results`)
   }
 
+  /** 사건별 반박 목록 조회 (evidence_id별 상대방 반박). 판결문 페이지에서 증거 밑에 표시용 */
+  async function getCaseRebuttals(caseId: string): Promise<RebuttalResponse[]> {
+    try {
+      return await request<RebuttalResponse[]>('GET', `${PREFIX}/case/${caseId}/rebuttals`)
+    } catch {
+      return []
+    }
+  }
+
   /** 증거 이미지 URL. file_path가 상대 경로일 때 Supabase storage public URL로 변환 */
   function getEvidenceImageUrl(contentOrPath: string | null | undefined): string {
     if (!contentOrPath) return ''
@@ -286,6 +295,7 @@ export function useCaseApi() {
     rebutEvidence,
     completeRebuttal,
     getCaseResults,
+    getCaseRebuttals,
     getEvidenceImageUrl,
   }
 }
