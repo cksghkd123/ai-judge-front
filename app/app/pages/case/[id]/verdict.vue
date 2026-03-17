@@ -104,10 +104,19 @@
 
         <!-- 4영역: AI 판결문 본문 (API: judgment_content / 로컬: verdictText) -->
         <section class="border-4 border-ink rounded-lg p-5 shadow-hard bg-accent/30">
-          <h2 class="font-doodle text-lg font-bold m-0 mb-3">판사님의 판결</h2>
-          <p v-if="judgeName" class="m-0 text-ink/80 text-sm mb-3">
-            {{ judgeName }}
-          </p>
+          <div class="w-full flex flex-col items-center text-center gap-3 mb-3">
+            <div
+              v-if="judgeImage"
+              class="w-48 h-48 mx-auto border-4 border-ink rounded-lg shadow-hard bg-paper overflow-hidden shrink-0"
+            >
+              <img
+                :src="judgeImage"
+                :alt="judgeName ? `${judgeName} 이미지` : '판사 이미지'"
+                class="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+          <h2 class="font-doodle text-2xl font-bold m-0 text-center">{{ judgeName }}의 판결</h2>
           <p class="m-0 text-ink whitespace-pre-wrap leading-relaxed">
             {{ verdictText || '(판결문 없음)' }}
           </p>
@@ -173,6 +182,17 @@ const judgeName = computed(() => {
     return a?.name ?? id
   }
   return id
+})
+
+const judgeImage = computed(() => {
+  const id = caseData.value?.judgeAgentId
+  if (!id) return null
+  const list = agentsList.value
+  if (list?.length) {
+    const a = list.find((ag) => ag.id === id)
+    return a?.judge_image || null
+  }
+  return null
 })
 
 const { data: caseResults } = await useAsyncData(
